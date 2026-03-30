@@ -17,11 +17,11 @@ from typing import Sequence
 
 import numpy as np
 from sklearn.base import BaseEstimator, RegressorMixin
-from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.validation import check_is_fitted, check_array
 
 from .gbm.dgbf import DGBFModel
 from .callback import TrainingCallback
-from .common.categorical import CategoricalEncoderMixin
+from .common.utils import sigmoid, softmax
 
 
 # ---------------------------------------------------------------------------
@@ -35,7 +35,7 @@ _CONFIG_PARAMS = ("objective", "random_state", "n_jobs")
 _CALLBACK_PARAMS = ("early_stopping_rounds", "eval_metric")
 
 
-class DeepGBoostRegressor(CategoricalEncoderMixin, BaseEstimator, RegressorMixin):
+class DeepGBoostRegressor(BaseEstimator, RegressorMixin):
     """
     DeepGBoost regressor — sklearn-compatible interface.
 
@@ -130,7 +130,7 @@ class DeepGBoostRegressor(CategoricalEncoderMixin, BaseEstimator, RegressorMixin
         -------
         self
         """
-        X = self._fit_transform_X(X)
+        X = check_array(X, dtype=np.float64)
         y = np.asarray(y, dtype=np.float64).ravel()
 
         self.model_ = DGBFModel(
@@ -151,7 +151,7 @@ class DeepGBoostRegressor(CategoricalEncoderMixin, BaseEstimator, RegressorMixin
         if eval_set:
             raw_evals = [
                 (
-                    self._transform_X(Xv),
+                    np.asarray(Xv, dtype=np.float64),
                     np.asarray(yv, dtype=np.float64).ravel(),
                     f"eval_{i}",
                 )
@@ -181,7 +181,7 @@ class DeepGBoostRegressor(CategoricalEncoderMixin, BaseEstimator, RegressorMixin
         np.ndarray of shape (n_samples,)
         """
         check_is_fitted(self, "model_")
-        X = self._transform_X(X)
+        X = check_array(X, dtype=np.float64)
         return self.model_.predict(X)
 
     def score(self, X, y, sample_weight=None) -> float:

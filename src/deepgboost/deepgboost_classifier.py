@@ -17,13 +17,12 @@ from typing import Sequence
 
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.validation import check_is_fitted, check_array
 from sklearn.preprocessing import LabelEncoder
 
 from .gbm.dgbf import DGBFModel
 from .callback import TrainingCallback
 from .common.utils import sigmoid, softmax
-from .common.categorical import CategoricalEncoderMixin
 
 
 # ---------------------------------------------------------------------------
@@ -37,7 +36,7 @@ _CONFIG_PARAMS = ("objective", "random_state", "n_jobs")
 _CALLBACK_PARAMS = ("early_stopping_rounds", "eval_metric")
 
 
-class DeepGBoostClassifier(CategoricalEncoderMixin, BaseEstimator, ClassifierMixin):
+class DeepGBoostClassifier(BaseEstimator, ClassifierMixin):
     """
     DeepGBoost classifier — sklearn-compatible interface.
 
@@ -133,7 +132,7 @@ class DeepGBoostClassifier(CategoricalEncoderMixin, BaseEstimator, ClassifierMix
         -------
         self
         """
-        X = self._fit_transform_X(X)
+        X = check_array(X, dtype=np.float64)
         y_raw = np.asarray(y)
 
         # Encode labels to 0..K-1
@@ -154,9 +153,6 @@ class DeepGBoostClassifier(CategoricalEncoderMixin, BaseEstimator, ClassifierMix
             subsample_min_frac=self.subsample_min_frac,
             random_state=self.random_state,
         )
-
-        if eval_set:
-            eval_set = [(self._transform_X(Xv), yv) for Xv, yv in eval_set]
 
         all_callbacks = list(callbacks or [])
         if self.early_stopping_rounds is not None and eval_set:
@@ -228,7 +224,7 @@ class DeepGBoostClassifier(CategoricalEncoderMixin, BaseEstimator, ClassifierMix
         np.ndarray of shape (n_samples, n_classes)
         """
         check_is_fitted(self, "classes_")
-        X = self._transform_X(X)
+        X = check_array(X, dtype=np.float64)
 
         if self.n_classes_ == 2:
             raw = self._binary_model.predict_raw(X)  # log-odds
