@@ -1,13 +1,8 @@
-#  DeepGBoost
-
-[![CI](https://github.com/DelgadoPanadero/DeepGBoost/actions/workflows/ci.yml/badge.svg)](https://github.com/DelgadoPanadero/DeepGBoost/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/DelgadoPanadero/DeepGBoost/branch/main/graph/badge.svg)](https://codecov.io/gh/DelgadoPanadero/DeepGBoost)
+# DeepGBoost
 
 Machine Learning algorithm based on gradient boosting forest that merges the power of tree ensembles with neural network architectures.
 
-<div align="center"><img src="./doc/icon.svg" width="50%"></div>
-
-## ⚙️ Installation
+## Installation
 
 ```bash
 pip install deepgboost
@@ -19,7 +14,7 @@ To install from source with development dependencies:
 pip install -e '.[dev]'
 ```
 
-## 🚀 Usage
+## Usage
 
 ### Quick Start
 
@@ -41,16 +36,15 @@ model = DeepGBoostRegressor(
 predictions = model.predict(X_test)
 ```
 
-### 📓 Examples
+### Examples
 
 Detailed usage examples are available in the [examples/](examples/) directory:
 
 - [quickstart.ipynb](examples/quickstart.ipynb) — full tour of the API (regression, classification, functional API, callbacks, feature importances)
 - [classifier.ipynb](examples/classifier.ipynb) — binary and multiclass classification walkthrough
 - [regressor.ipynb](examples/regressor.ipynb) — regression walkthrough
-- [serialization.ipynb](examples/serialization.ipynb) — saving and loading trained models with pickle
 
-## 🧠 DeepGBoost
+## DeepGBoost
 
 ### Algorithm
 
@@ -62,59 +56,32 @@ Classical tree ensemble methods — RandomForest (*bagging*) and GradientBoostin
 
 The core idea is to distribute the gradient descent of each boosting step across the individual trees of a RandomForest layer, so that each tree learns an independent gradient component:
 
-</br>
-
 $$F_i(x) = \sum_{l=1}^{L} RF_l(x) = \frac{1}{T} \sum_{l=0}^{L} \sum_{t=0}^{T} h_{l,t}(x)$$
-
-</br>
 
 where *L* is the number of boosting layers and *T* is the number of trees per layer. This structure is a direct analogue of a **Dense Neural Network**, where each RandomForest layer corresponds to a network layer, with distributed gradients replacing back-propagation.
 
 
-<div align="center" style="width:80%; margin:auto;">
-<img src="doc/fig1.png" width="80%">
-<p><strong>Fig. 1</strong> — <strong>NeuralNetwork vs DGBF architecture</strong>: In NN (left), each neuron's output feeds into the next layer via back-propagation. In DGBF (right), the distributed gradients of all trees from each layer are forwarded to every tree of the following layer.</p>
-</div>
+![Fig 1](doc/fig1.png) 
+
+**Fig. 1** — **NeuralNetwork vs DGBF architecture**: In NN (left), each neuron's output feeds into the next layer via back-propagation. In DGBF (right), the distributed gradients of all trees from each layer are forwarded to every tree of the following layer.
 
 Both RandomForest and GradientBoosting emerge naturally as special cases of DGBF: RandomForest is recovered with a single layer (*L* = 1) and GradientBoosting with a single tree per layer (*T* = 1).
 
 
-<div align="center" style="width:80%; margin:auto;">
-<img src="doc/fig2.png" width="80%">
-<p><strong>Fig. 2</strong> — <strong>RandomForest & GradientBoosting as DGBF special cases</strong>: RandomForest (left) and GradientBoosting (right) represented as particular graph architectures of DGBF.</p>
-</div>
+![Fig 2](doc/fig2.png)
 
-### 📊 Benchmark
+
+**Fig. 2** — **RandomForest & GradientBoosting as DGBF special cases**:RandomForest (left) and GradientBoosting (right) represented as particular graph architectures of DGBF.
+
+### Benchmark
 
 DGBF was evaluated against RandomForest (RF) and GradientBoosting (GBDT) on 9 regression datasets from the UCI Machine Learning Repository (Parkinson, Wine, Concrete, Obesity, NavalVessel, Temperature, Cargo2000, BikeSales, Superconduct), using 200 randomized simulations per dataset with an 80/20 train-test split.
 
-<div align="center"><img src="doc/benchmark.png" width="80%"></div>
+**DGBF surpasses the mean R² score of both GradientBoosting and RandomForest in 7 out of 9 datasets**
 
-> [!note] **Winner DeepGBoost**
-> 🏆 DGBF surpasses the mean R² score of both GradientBoosting and RandomForest in 7 out of 9 datasets
+![Benchmark](doc/benchmark.png)
 
-To reproduce the benchmark, run the experiment script from the `benchmark/` directory:
-
-```bash
-cd benchmark
-python run_experiments.py
-```
-
-The script reads its configuration from `benchmark/config.json`, where you can adjust the models, hyperparameters, datasets, and experiment settings (e.g. number of bootstrap runs). Results are saved to `benchmark/results/`.
-
-## 🤝 Contributing
-
-Contributions are welcome. To get started:
-
-1. Fork the repository and create a branch from `main`.
-2. Install development dependencies: `pip install -e '.[dev]'`
-3. Make your changes and add tests as needed.
-4. Run the test suite: `pytest`
-5. Open a pull request describing what you changed and why.
-
-Please open an issue first for significant changes so the approach can be discussed before implementation.
-
-## 📄 Citation
+## Citation
 
 If you use DeepGBoost in your research, please cite the original paper:
 
