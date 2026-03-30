@@ -2,6 +2,8 @@
 
 Machine Learning algorithm based on gradient boosting forest that merges the power of tree ensembles with neural network architectures.
 
+![icon](./doc/icon.svg)
+
 ## Installation
 
 ```bash
