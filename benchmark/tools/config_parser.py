@@ -99,7 +99,7 @@ class ConfigParser:
         )
 
         assert all(
-            dataset.keys() == schema["Datasets"][0].keys()
+            schema["Datasets"][0].keys() <= dataset.keys()
             for dataset in config["Datasets"]
         )
 

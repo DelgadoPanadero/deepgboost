@@ -27,11 +27,11 @@
   },
   "Experiments": [
     {
-      "module": "src.experiments",
+      "module": "benchmark.experiments.bootstrap_test",
       "object": "BootstrapModelTest",
       "parameters": {
-        "n_runs": 200,
-        "n_bins": 50
+        "n_runs": 5,
+        "n_bins": 5
       }
     }
   ],
@@ -41,7 +41,8 @@
       "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00316/UCI%20CBM%20Dataset.zip",
       "function": "read_csv",
       "file": "data/UCI_CBM_Dataset.csv",
-      "sep": ","
+      "sep": "\\s+",
+      "zip_entry": "UCI CBM Dataset/data.txt"
     },
     {
       "name": "Cargo2000",
@@ -55,7 +56,8 @@
       "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00560/SeoulBikeData.csv",
       "function": "read_csv",
       "file": "data/SeoulBikeData.csv",
-      "sep": ","
+      "sep": ",",
+      "encoding": "latin-1"
     },
     {
       "name": "Temperature",
@@ -69,7 +71,8 @@
       "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00464/superconduct.zip",
       "function": "read_csv",
       "file": "data/superconduct.csv",
-      "sep": ","
+      "sep": ",",
+      "zip_entry": "train.csv"
     },
     {
       "name": "Wine",

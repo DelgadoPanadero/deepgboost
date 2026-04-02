@@ -1,3 +1,4 @@
+import os
 import abc
 
 import numpy as np
@@ -5,6 +6,9 @@ from tqdm import tqdm
 from matplotlib import pyplot as plt
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_squared_error
+
+
+BENCHMARK_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class AbstractModelTest:
@@ -31,7 +35,7 @@ class AbstractModelTest:
         differences_1 = scores_3 - scores_1
         differences_2 = scores_3 - scores_2
 
-        file_name = f"results/{name.replace(' ', '_').lower()}.txt"
+        file_name = f"{BENCHMARK_DIR}/results/{name.replace(' ', '_').lower()}.txt"
         with open(file_name, "w") as file:
             text = (
                 f"Model 1 Score: {scores_1.mean()} +- {scores_1.std()}\n"
@@ -50,7 +54,7 @@ class AbstractModelTest:
         score_3,
     ):
 
-        file_name = f"results/{name.replace(' ', '_').lower()}_scores.csv"
+        file_name = f"{BENCHMARK_DIR}/results/{name.replace(' ', '_').lower()}_scores.csv"
         with open(file_name, "w") as file:
             text = "model_1, model_2, model_3, differences_1, differences_2\n"
             for score_1, score_2 in zip(scores_1, scores_2):
@@ -82,7 +86,7 @@ class AbstractModelTest:
         plt.xlabel("Paired R2 Diference")
         plt.ylabel("Counts")
         plt.legend(loc="upper right")
-        file_name = f"results/{name.replace(' ', '_').lower()}_score_diff.png"
+        file_name = f"{BENCHMARK_DIR}/results/{name.replace(' ', '_').lower()}_score_diff.png"
         plt.savefig(file_name)
         plt.clf()
 
@@ -107,7 +111,7 @@ class AbstractModelTest:
         plt.xlabel("R2 Score")
         plt.ylabel("Counts")
         plt.legend(loc="upper right")
-        file_name = f"results/{name.replace(' ', '_').lower()}_score.png"
+        file_name = f"{BENCHMARK_DIR}/results/{name.replace(' ', '_').lower()}_score.png"
         plt.savefig(file_name)
         plt.clf()
 
@@ -123,7 +127,7 @@ class AbstractModelTest:
         plt.xlabel("Prediction values")
         plt.ylabel("Counts")
         plt.legend(loc="upper right")
-        file_name = f"results/{name.replace(' ', '_').lower()}_preds.png"
+        file_name = f"{BENCHMARK_DIR}/results/{name.replace(' ', '_').lower()}_preds.png"
         plt.savefig(file_name)
         plt.clf()
 
@@ -140,6 +144,6 @@ class AbstractModelTest:
         plt.xlabel("Prediction deviation")
         plt.ylabel("Counts")
         plt.legend(loc="upper right")
-        file_name = f"results/{name.replace(' ', '_').lower()}_deviations.png"
+        file_name = f"{BENCHMARK_DIR}/results/{name.replace(' ', '_').lower()}_deviations.png"
         plt.savefig(file_name)
         plt.clf()
