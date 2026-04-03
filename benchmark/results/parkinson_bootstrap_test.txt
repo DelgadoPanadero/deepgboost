@@ -1,7 +1,0 @@
-GradientBoosting Score: 0.8397 +- 0.0093
-RandomForest Score: 0.8480 +- 0.0096
-XGBoost Score: 0.8428 +- 0.0109
-DeepGBoost Score: 0.8530 +- 0.0089
-Difference (DeepGBoost - GradientBoosting): 0.0134 +- 0.0031
-Difference (DeepGBoost - RandomForest): 0.0051 +- 0.0031
-Difference (DeepGBoost - XGBoost): 0.0102 +- 0.0044

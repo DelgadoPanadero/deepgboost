@@ -21,6 +21,10 @@ class AbstractModelTest:
     def score(self, y_test, y_pred):
         raise NotImplementedError()
 
+    @property
+    def metric_name(self) -> str:
+        return "R2"
+
     def _save_summary(self, name, scores_dict):
         model_names = list(scores_dict.keys())
         reference = model_names[-1]
@@ -62,8 +66,8 @@ class AbstractModelTest:
         for model_name, scores in scores_dict.items():
             plt.hist(scores, bins, alpha=0.5, label=model_name)
 
-        plt.title(f"{name} R2 Score")
-        plt.xlabel("R2 Score")
+        plt.title(f"{name} {self.metric_name} Score")
+        plt.xlabel(f"{self.metric_name} Score")
         plt.ylabel("Counts")
         plt.legend(loc="upper right")
         file_name = f"{BENCHMARK_DIR}/results/{name.replace(' ', '_').lower()}_score.png"
@@ -78,10 +82,10 @@ class AbstractModelTest:
         for model_name in model_names[:-1]:
             differences = ref_scores - scores_dict[model_name]
             bins = np.linspace(differences.min(), differences.max(), n_bins)
-            plt.hist(differences, bins, alpha=0.5, label=f"R2 diff {model_name}")
+            plt.hist(differences, bins, alpha=0.5, label=f"{self.metric_name} diff {model_name}")
 
-        plt.title(f"{name} Paired R2 Difference")
-        plt.xlabel("Paired R2 Difference")
+        plt.title(f"{name} Paired {self.metric_name} Difference")
+        plt.xlabel(f"Paired {self.metric_name} Difference")
         plt.ylabel("Counts")
         plt.legend(loc="upper right")
         file_name = f"{BENCHMARK_DIR}/results/{name.replace(' ', '_').lower()}_score_diff.png"
