@@ -58,9 +58,10 @@
       "module": "benchmark.models",
       "object": "DeepGBoostClassifierModel",
       "parameters": {
-        "n_layers": 5,
-        "learning_rate": 0.8,
-        "n_trees": 20
+        "n_layers": 50,
+        "learning_rate": 0.05,
+        "n_trees": 2,
+        "subsample_min_frac": 0.6
       }
     }
   },
@@ -86,49 +87,14 @@
   ],
   "Datasets": [
     {
-      "name": "NavalVessel",
-      "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00316/UCI%20CBM%20Dataset.zip",
+      "name": "BankMarketing",
+      "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00222/bank.zip",
       "function": "read_csv",
-      "file": "data/UCI_CBM_Dataset.csv",
-      "sep": "\\s+",
-      "zip_entry": "UCI CBM Dataset/data.txt",
-      "task": "regression"
-    },
-    {
-      "name": "CaliforniaHousing",
-      "url": "https://raw.githubusercontent.com/ageron/handson-ml2/master/datasets/housing/housing.csv",
-      "function": "read_csv",
-      "file": "data/california_housing.csv",
-      "sep": ",",
-      "target_column": "median_house_value",
-      "categorical_columns": ["ocean_proximity"],
-      "task": "regression"
-    },
-    {
-      "name": "BikeSales",
-      "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00560/SeoulBikeData.csv",
-      "function": "read_csv",
-      "file": "data/SeoulBikeData.csv",
-      "sep": ",",
-      "encoding": "latin-1",
-      "task": "regression"
-    },
-    {
-      "name": "Temperature",
-      "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00514/Bias_correction_ucl.csv",
-      "function": "read_csv",
-      "file": "data/Bias_correction_ucl.csv",
-      "sep": "\\s+",
-      "task": "regression"
-    },
-    {
-      "name": "Superconduct",
-      "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00464/superconduct.zip",
-      "function": "read_csv",
-      "file": "data/superconduct.csv",
-      "sep": ",",
-      "zip_entry": "train.csv",
-      "task": "regression"
+      "file": "data/bank_full.csv",
+      "sep": ";",
+      "zip_entry": "bank-full.csv",
+      "categorical_columns": ["job", "marital", "education", "default", "housing", "loan", "contact", "month", "poutcome"],
+      "task": "classification"
     },
     {
       "name": "Abalone",
@@ -165,14 +131,50 @@
       "task": "classification"
     },
     {
-      "name": "BankMarketing",
-      "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00222/bank.zip",
+      "name": "NavalVessel",
+      "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00316/UCI%20CBM%20Dataset.zip",
       "function": "read_csv",
-      "file": "data/bank_full.csv",
-      "sep": ";",
-      "zip_entry": "bank-full.csv",
-      "categorical_columns": ["job", "marital", "education", "default", "housing", "loan", "contact", "month", "poutcome"],
-      "task": "classification"
+      "file": "data/UCI_CBM_Dataset.csv",
+      "sep": "\\s+",
+      "zip_entry": "UCI CBM Dataset/data.txt",
+      "task": "regression"
+    },
+    {
+      "name": "CaliforniaHousing",
+      "url": "https://raw.githubusercontent.com/ageron/handson-ml2/master/datasets/housing/housing.csv",
+      "function": "read_csv",
+      "file": "data/california_housing.csv",
+      "sep": ",",
+      "target_column": "median_house_value",
+      "categorical_columns": ["ocean_proximity"],
+      "dropna": true,
+      "task": "regression"
+    },
+    {
+      "name": "BikeSales",
+      "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00560/SeoulBikeData.csv",
+      "function": "read_csv",
+      "file": "data/SeoulBikeData.csv",
+      "sep": ",",
+      "encoding": "latin-1",
+      "task": "regression"
+    },
+    {
+      "name": "Temperature",
+      "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00514/Bias_correction_ucl.csv",
+      "function": "read_csv",
+      "file": "data/Bias_correction_ucl.csv",
+      "sep": "\\s+",
+      "task": "regression"
+    },
+    {
+      "name": "Superconduct",
+      "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00464/superconduct.zip",
+      "function": "read_csv",
+      "file": "data/superconduct.csv",
+      "sep": ",",
+      "zip_entry": "train.csv",
+      "task": "regression"
     }
   ]
 }
