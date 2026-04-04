@@ -44,7 +44,10 @@ class ExperimentRunner:
     def _load_models(self, config):
         self._models = {}
 
-        for task_key, task in [("RegressionModels", "regression"), ("ClassificationModels", "classification")]:
+        for task_key, task in [
+            ("RegressionModels", "regression"),
+            ("ClassificationModels", "classification"),
+        ]:
             models = {}
             for name, model_config in config.get(task_key, {}).items():
                 module = model_config["module"]
@@ -65,7 +68,9 @@ class ExperimentRunner:
             task = experiment.get("task", "regression")
 
             params["models"] = list(self._models[task].values())
-            self._experiments[task][obj] = getattr(import_module(module), obj)(**params)
+            self._experiments[task][obj] = getattr(import_module(module), obj)(
+                **params
+            )
 
         return self._experiments
 
@@ -100,7 +105,9 @@ class ExperimentRunner:
                     df = func(dataset["url"], **kwargs)
 
                 if "drop_columns" in dataset:
-                    df = df.drop(columns=dataset["drop_columns"], errors="ignore")
+                    df = df.drop(
+                        columns=dataset["drop_columns"], errors="ignore"
+                    )
 
                 df.to_csv(file_path, index=False)
 
@@ -111,14 +118,20 @@ class ExperimentRunner:
 
             if "target_column" in dataset:
                 target_col = dataset["target_column"]
-                cols = [c for c in data.columns if c != target_col] + [target_col]
+                cols = [c for c in data.columns if c != target_col] + [
+                    target_col
+                ]
                 data = data[cols]
 
             if "categorical_columns" in dataset:
                 cat_cols = dataset["categorical_columns"]
-                encoder = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
+                encoder = OrdinalEncoder(
+                    handle_unknown="use_encoded_value", unknown_value=-1
+                )
                 data[cat_cols] = encoder.fit_transform(
-                    data[cat_cols].astype(str).apply(lambda col: col.str.strip())
+                    data[cat_cols]
+                    .astype(str)
+                    .apply(lambda col: col.str.strip())
                 )
 
             task = dataset.get("task", "regression")

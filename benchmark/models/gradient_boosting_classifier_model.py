@@ -4,9 +4,10 @@ from .abstract_model import AbstractModel
 
 
 class GradientBoostingClassifierModel(AbstractModel):
-
     def __init__(self, n_estimators=100, **kwargs):
-        self._model = GradientBoostingClassifier(n_estimators=n_estimators, **kwargs)
+        self._model = GradientBoostingClassifier(
+            n_estimators=n_estimators, **kwargs
+        )
 
     @property
     def name(self) -> str:

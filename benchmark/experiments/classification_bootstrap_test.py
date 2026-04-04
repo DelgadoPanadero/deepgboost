@@ -34,9 +34,13 @@ class ClassificationBootstrapTest(AbstractModelTest):
             yield X_train, y_train, X_test, y_test
 
     def run(self, name, X, y):
-        scores = {model.name: np.zeros((self._n_runs,)) for model in self._models}
+        scores = {
+            model.name: np.zeros((self._n_runs,)) for model in self._models
+        }
 
-        for i, (X_train, y_train, X_test, y_test) in enumerate(self.create_batch(X, y)):
+        for i, (X_train, y_train, X_test, y_test) in enumerate(
+            self.create_batch(X, y)
+        ):
             for model in self._models:
                 y_pred = model.fit(X_train, y_train).predict(X_test)
                 scores[model.name][i] = self.score(y_test, y_pred)

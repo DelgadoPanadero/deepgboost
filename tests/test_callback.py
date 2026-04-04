@@ -19,6 +19,7 @@ from deepgboost.gbm.dgbf import DGBFModel
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="module")
 def diabetes_split():
     X, y = load_diabetes(return_X_y=True)
@@ -29,8 +30,8 @@ def diabetes_split():
 # TrainingCallback base
 # ---------------------------------------------------------------------------
 
-class TestTrainingCallbackBase:
 
+class TestTrainingCallbackBase:
     def test_default_methods_return_false(self):
         cb = TrainingCallback()
         model = object()
@@ -48,11 +49,13 @@ class TestTrainingCallbackBase:
 # EarlyStopping
 # ---------------------------------------------------------------------------
 
-class TestEarlyStopping:
 
+class TestEarlyStopping:
     def test_stops_when_no_improvement_unit(self):
         """Unit test: EarlyStopping returns True after patience exhausted."""
-        es = EarlyStopping(patience=3, metric="train_loss", data="val", restore_best=False)
+        es = EarlyStopping(
+            patience=3, metric="train_loss", data="val", restore_best=False
+        )
 
         class FakeModel:
             graph_ = []
@@ -64,12 +67,12 @@ class TestEarlyStopping:
 
         # Simulate: improvement at epoch 0, then no improvement for 3 epochs
         improving_log = {"val": {"train_loss": 1.0}}
-        stale_log     = {"val": {"train_loss": 1.5}}
+        stale_log = {"val": {"train_loss": 1.5}}
 
         assert es.after_iteration(model, 0, improving_log) is False  # improves
-        assert es.after_iteration(model, 1, stale_log) is False       # wait=1
-        assert es.after_iteration(model, 2, stale_log) is False       # wait=2
-        assert es.after_iteration(model, 3, stale_log) is True        # wait=3 → stop
+        assert es.after_iteration(model, 1, stale_log) is False  # wait=1
+        assert es.after_iteration(model, 2, stale_log) is False  # wait=2
+        assert es.after_iteration(model, 3, stale_log) is True  # wait=3 → stop
 
     def test_training_stops_when_callback_returns_true(self, diabetes_split):
         """Integration test: training loop stops when any callback returns True."""
@@ -92,7 +95,11 @@ class TestEarlyStopping:
         X_train, X_val, y_train, y_val = diabetes_split
         es = EarlyStopping(patience=3, restore_best=True)
         reg = DeepGBoostRegressor(
-            n_trees=3, n_layers=20, max_depth=3, learning_rate=0.05, random_state=1
+            n_trees=3,
+            n_layers=20,
+            max_depth=3,
+            learning_rate=0.05,
+            random_state=1,
         )
         reg.fit(X_train, y_train, eval_set=[(X_val, y_val)], callbacks=[es])
         # Model should still be able to predict after restore
@@ -118,8 +125,8 @@ class TestEarlyStopping:
 # LearningRateScheduler
 # ---------------------------------------------------------------------------
 
-class TestLearningRateScheduler:
 
+class TestLearningRateScheduler:
     def test_scheduler_changes_learning_rate(self, diabetes_split):
         X_train, X_val, y_train, y_val = diabetes_split
 
@@ -131,7 +138,7 @@ class TestLearningRateScheduler:
                 return False
 
         # Decay by 10% each layer
-        scheduler = LearningRateScheduler(lambda epoch: 0.1 * (0.9 ** epoch))
+        scheduler = LearningRateScheduler(lambda epoch: 0.1 * (0.9**epoch))
         recorder = LRRecorder()
 
         model = DGBFModel(n_trees=3, n_layers=5, random_state=0)
@@ -141,7 +148,9 @@ class TestLearningRateScheduler:
         assert len(rates_seen) == 5
         # After scheduler, rates are set; verify they're different
         unique_rates = set(round(r, 6) for r in rates_seen)
-        assert len(unique_rates) > 1, "Learning rates should change across layers"
+        assert len(unique_rates) > 1, (
+            "Learning rates should change across layers"
+        )
 
     def test_constant_schedule(self, diabetes_split):
         X_train, _, y_train, _ = diabetes_split
@@ -155,14 +164,15 @@ class TestLearningRateScheduler:
 # EvaluationMonitor
 # ---------------------------------------------------------------------------
 
-class TestEvaluationMonitor:
 
+class TestEvaluationMonitor:
     def test_monitor_prints_every_period(self, diabetes_split, capsys):
         X_train, X_val, y_train, y_val = diabetes_split
         monitor = EvaluationMonitor(period=2)
         model = DGBFModel(n_trees=3, n_layers=4, random_state=0)
         model.fit(
-            X_train, y_train,
+            X_train,
+            y_train,
             callbacks=[monitor],
             evals=[(X_val, y_val, "val")],
         )

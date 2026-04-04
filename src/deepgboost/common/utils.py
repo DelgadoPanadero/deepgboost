@@ -63,32 +63,42 @@ def weight_solver(
     method: str = "nnls",
 ) -> np.ndarray:
     """
-    Compute optimal combination weights for tree outputs (paper eq. 10–11).
-
-    Solves ``min_w ||y - tree_pred @ w||`` subject to ``w >= 0``, then
-    normalises so ``sum(w) = 1``.  Falls back to uniform weights when
-    the solver produces a zero vector.
+    Compute combination weights for the T bagged trees in a layer.
 
     Parameters
     ----------
-    tree_pred : np.ndarray of shape (n_samples, n_outputs)
-        Predicted values for each tree output.
+    tree_pred : np.ndarray of shape (n_samples, n_trees)
+        Each column is one bagged tree's prediction on the full dataset.
     y_real : np.ndarray of shape (n_samples,)
-        Target values (mean pseudo-residuals).
-    method : {"nnls"}
-        Solver method.  Only "nnls" is currently supported.
+        Pseudo-residuals target (used only when ``method="nnls"``).
+    method : {"nnls", "uniform"}
+        ``"nnls"``    — Non-Negative Least Squares: solves
+                        ``min_w ||y - tree_pred @ w||`` s.t. ``w >= 0``,
+                        then normalises to ``sum(w) = 1``.  Gives each tree
+                        an optimal, data-driven weight.
+        ``"uniform"`` — Equal weight ``1/n_trees`` for every tree, exactly
+                        as in a standard RandomForest.  Combined with
+                        ``n_layers=1`` and ``learning_rate=1.0`` this makes
+                        DeepGBoost mathematically equivalent to
+                        RandomForest.
 
     Returns
     -------
-    np.ndarray of shape (n_outputs,)
+    np.ndarray of shape (n_trees,)
         Non-negative weights summing to 1.
     """
     n_outputs = tree_pred.shape[1]
 
+    if method == "uniform":
+        return np.full(n_outputs, 1.0 / n_outputs)
+
     if method == "nnls":
         weights, _ = nnls(tree_pred, y_real)
     else:
-        raise ValueError(f"Unknown weight_solver method: '{method}'")
+        raise ValueError(
+            f"Unknown weight_solver method: '{method}'. "
+            "Valid options are 'nnls' and 'uniform'."
+        )
 
     total = weights.sum()
     if total == 0.0:

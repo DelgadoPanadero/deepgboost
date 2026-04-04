@@ -15,6 +15,7 @@ from deepgboost import DeepGBoostDMatrix, DeepGBoostBooster
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="module")
 def diabetes():
     X, y = load_diabetes(return_X_y=True)
@@ -37,8 +38,8 @@ def dtest_diabetes(diabetes):
 # DeepGBoostDMatrix tests
 # ---------------------------------------------------------------------------
 
-class TestDeepGBoostDMatrix:
 
+class TestDeepGBoostDMatrix:
     def test_from_numpy_array(self, diabetes):
         X, y = diabetes
         dm = DeepGBoostDMatrix(X, label=y)
@@ -84,8 +85,8 @@ class TestDeepGBoostDMatrix:
 # DeepGBoostBooster tests
 # ---------------------------------------------------------------------------
 
-class TestDeepGBoostBooster:
 
+class TestDeepGBoostBooster:
     _PARAMS = {
         "n_trees": 5,
         "n_layers": 5,

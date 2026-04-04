@@ -17,6 +17,7 @@ from deepgboost import DeepGBoostClassifier
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="module")
 def binary_split():
     X, y = load_breast_cancer(return_X_y=True)
@@ -33,8 +34,8 @@ def multiclass_split():
 # Binary classification
 # ---------------------------------------------------------------------------
 
-class TestDeepGBoostClassifierBinary:
 
+class TestDeepGBoostClassifierBinary:
     _CLF = DeepGBoostClassifier(
         n_trees=5, n_layers=10, max_depth=4, learning_rate=0.15, random_state=42
     )
@@ -113,8 +114,8 @@ class TestDeepGBoostClassifierBinary:
 # Multiclass classification
 # ---------------------------------------------------------------------------
 
-class TestDeepGBoostClassifierMulticlass:
 
+class TestDeepGBoostClassifierMulticlass:
     _CLF = DeepGBoostClassifier(
         n_trees=5, n_layers=8, max_depth=3, learning_rate=0.1, random_state=0
     )
@@ -165,7 +166,9 @@ class TestDeepGBoostClassifierMulticlass:
         clf = clone(self._CLF)
         clf.fit(X_train, y_train)
         acc = clf.score(X_test, y_test)
-        assert acc > 0.85, f"Multiclass accuracy should be > 0.85, got {acc:.4f}"
+        assert acc > 0.85, (
+            f"Multiclass accuracy should be > 0.85, got {acc:.4f}"
+        )
 
     def test_feature_importances_multiclass(self, multiclass_split):
         X_train, _, y_train, _ = multiclass_split
@@ -180,10 +183,12 @@ class TestDeepGBoostClassifierMulticlass:
 # Sklearn compatibility
 # ---------------------------------------------------------------------------
 
-class TestDeepGBoostClassifierSklearnCompat:
 
+class TestDeepGBoostClassifierSklearnCompat:
     def test_clone_preserves_params(self):
-        clf = DeepGBoostClassifier(n_layers=10, learning_rate=0.05, random_state=7)
+        clf = DeepGBoostClassifier(
+            n_layers=10, learning_rate=0.05, random_state=7
+        )
         clf2 = clone(clf)
         assert clf2.n_layers == 10
         assert clf2.learning_rate == 0.05
@@ -225,19 +230,23 @@ class TestDeepGBoostClassifierSklearnCompat:
 # Categorical encoding
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def cat_binary_numpy():
     """Binary classification dataset with one categorical column (numpy)."""
-    X = np.array([
-        ["red",   1.0],
-        ["blue",  2.0],
-        ["red",   1.5],
-        ["green", 2.5],
-        ["blue",  2.0],
-        ["green", 1.0],
-        ["red",   1.8],
-        ["blue",  2.3],
-    ], dtype=object)
+    X = np.array(
+        [
+            ["red", 1.0],
+            ["blue", 2.0],
+            ["red", 1.5],
+            ["green", 2.5],
+            ["blue", 2.0],
+            ["green", 1.0],
+            ["red", 1.8],
+            ["blue", 2.3],
+        ],
+        dtype=object,
+    )
     y = np.array([0, 1, 0, 1, 1, 0, 0, 1])
     return X, y
 
@@ -245,18 +254,43 @@ def cat_binary_numpy():
 @pytest.fixture
 def cat_multiclass_pandas():
     """Multiclass classification dataset as a pandas DataFrame."""
-    X = pd.DataFrame({
-        "color":  ["red", "blue", "green", "red", "blue", "green",
-                   "red", "blue", "green", "red", "blue", "green"],
-        "weight": [1.0, 2.0, 3.0, 1.5, 2.5, 3.5,
-                   1.2, 2.2, 3.2, 1.8, 2.8, 3.8],
-    })
+    X = pd.DataFrame(
+        {
+            "color": [
+                "red",
+                "blue",
+                "green",
+                "red",
+                "blue",
+                "green",
+                "red",
+                "blue",
+                "green",
+                "red",
+                "blue",
+                "green",
+            ],
+            "weight": [
+                1.0,
+                2.0,
+                3.0,
+                1.5,
+                2.5,
+                3.5,
+                1.2,
+                2.2,
+                3.2,
+                1.8,
+                2.8,
+                3.8,
+            ],
+        }
+    )
     y = np.array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2])
     return X, y
 
 
 class TestDeepGBoostClassifierCategorical:
-
     _CLF = DeepGBoostClassifier(n_trees=3, n_layers=5, random_state=0)
 
     def test_numpy_detects_categorical_column(self, cat_binary_numpy):
@@ -349,7 +383,9 @@ class TestDeepGBoostClassifierCategorical:
         np.testing.assert_array_equal(preds_before, clf_loaded.predict(X))
         np.testing.assert_array_equal(proba_before, clf_loaded.predict_proba(X))
 
-    def test_pickle_identical_predictions_multiclass(self, cat_multiclass_pandas):
+    def test_pickle_identical_predictions_multiclass(
+        self, cat_multiclass_pandas
+    ):
         X, y = cat_multiclass_pandas
         clf = clone(self._CLF)
         clf.fit(X, y)

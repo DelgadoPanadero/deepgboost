@@ -4,7 +4,6 @@ from .abstract_model import AbstractModel
 
 
 class RandomForestModel(AbstractModel):
-
     def __init__(self, n_estimators=100, **kwargs):
         self._model = RandomForestRegressor(n_estimators=n_estimators, **kwargs)
 

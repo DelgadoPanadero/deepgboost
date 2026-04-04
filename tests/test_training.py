@@ -18,6 +18,7 @@ from deepgboost import (
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="module")
 def regression_data():
     X, y = load_diabetes(return_X_y=True)
@@ -54,8 +55,8 @@ _PARAMS = {
 # train() basic
 # ---------------------------------------------------------------------------
 
-class TestTrainFunction:
 
+class TestTrainFunction:
     def test_returns_booster(self, regression_data):
         dtrain, _, _ = regression_data
         bst = train(_PARAMS, dtrain, verbose_eval=False)
@@ -87,20 +88,23 @@ class TestTrainFunction:
 # train() with evals
 # ---------------------------------------------------------------------------
 
-class TestTrainWithEvals:
 
+class TestTrainWithEvals:
     def test_evals_result_populated(self, regression_data):
         dtrain, dval, _ = regression_data
         evals_result = {}
         train(
-            _PARAMS, dtrain,
+            _PARAMS,
+            dtrain,
             evals=[(dval, "validation")],
             evals_result=evals_result,
             verbose_eval=False,
         )
         assert "validation" in evals_result
         assert "train_loss" in evals_result["validation"]
-        assert len(evals_result["validation"]["train_loss"]) == _PARAMS["n_layers"]
+        assert (
+            len(evals_result["validation"]["train_loss"]) == _PARAMS["n_layers"]
+        )
 
     def test_evals_result_decreasing_loss(self, regression_data):
         dtrain, dval, _ = regression_data
@@ -108,7 +112,8 @@ class TestTrainWithEvals:
         params = dict(_PARAMS, n_layers=10, learning_rate=0.2)
         evals_result = {}
         train(
-            params, dtrain,
+            params,
+            dtrain,
             evals=[(dval, "val")],
             evals_result=evals_result,
             verbose_eval=False,
@@ -122,8 +127,8 @@ class TestTrainWithEvals:
 # train() with early stopping
 # ---------------------------------------------------------------------------
 
-class TestTrainEarlyStopping:
 
+class TestTrainEarlyStopping:
     def test_early_stopping_requires_evals(self, regression_data):
         dtrain, _, _ = regression_data
         with pytest.raises(ValueError, match="eval"):
@@ -134,7 +139,8 @@ class TestTrainEarlyStopping:
         params = dict(_PARAMS, n_layers=50, learning_rate=1.0)
         evals_result = {}
         train(
-            params, dtrain,
+            params,
+            dtrain,
             evals=[(dval, "val")],
             early_stopping_rounds=3,
             evals_result=evals_result,
@@ -154,7 +160,9 @@ class TestTrainEarlyStopping:
                 called.append(epoch)
                 return False
 
-        train(_PARAMS, dtrain, callbacks=[CounterCallback()], verbose_eval=False)
+        train(
+            _PARAMS, dtrain, callbacks=[CounterCallback()], verbose_eval=False
+        )
         assert len(called) == _PARAMS["n_layers"]
 
 
@@ -162,8 +170,8 @@ class TestTrainEarlyStopping:
 # train() with classification
 # ---------------------------------------------------------------------------
 
-class TestTrainClassification:
 
+class TestTrainClassification:
     def test_binary_logistic(self, binary_data):
         dtrain, dval, dtest = binary_data
         params = dict(_PARAMS, objective="binary:logistic")
@@ -176,8 +184,8 @@ class TestTrainClassification:
 # cv()
 # ---------------------------------------------------------------------------
 
-class TestCVFunction:
 
+class TestCVFunction:
     def test_cv_returns_dict(self):
         X, y = load_diabetes(return_X_y=True)
         data = DeepGBoostDMatrix(X[:100], label=y[:100])
