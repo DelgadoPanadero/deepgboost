@@ -24,16 +24,20 @@ class CrossValidationModelTest(AbstractModelTest):
     def create_batch(self, X, y):
         n_rows = X.shape[0]
         for i in range(self._n_folds):
-            idx = set(range(
-                i * n_rows // self._n_folds,
-                (i + 1) * n_rows // self._n_folds,
-            ))
+            idx = set(
+                range(
+                    i * n_rows // self._n_folds,
+                    (i + 1) * n_rows // self._n_folds,
+                )
+            )
             train_mask = [j not in idx for j in range(n_rows)]
             test_mask = [j in idx for j in range(n_rows)]
             yield X[train_mask], y[train_mask], X[test_mask], y[test_mask]
 
     def run(self, name, X, y):
-        scores = {model.name: np.zeros((self._n_runs,)) for model in self._models}
+        scores = {
+            model.name: np.zeros((self._n_runs,)) for model in self._models
+        }
 
         for j in tqdm(range(self._n_runs)):
             ids = np.random.permutation(X.shape[0])
@@ -44,7 +48,9 @@ class CrossValidationModelTest(AbstractModelTest):
             ):
                 for model in self._models:
                     y_pred = model.fit(X_train, y_train).predict(X_test)
-                    scores[model.name][j] += self.score(y_test, y_pred) / self._n_folds
+                    scores[model.name][j] += (
+                        self.score(y_test, y_pred) / self._n_folds
+                    )
 
         name = f"{name} Cross Validation Test"
         self._save_scores(name, scores)

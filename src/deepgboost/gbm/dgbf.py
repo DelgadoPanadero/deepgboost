@@ -7,8 +7,9 @@ Implements Algorithm 1 from the paper:
      Delgado-Panadero et al., Applied Intelligence 2023.
 
 The model follows a deep-graph architecture analogous to a Dense Neural
-Network: each layer is a RandomForest ensemble, stacked via boosting, with
-each tree independently learning a distributed gradient component.
+Network: each layer is a bagged ensemble of trees (analogous to
+RandomForest), stacked via boosting.  With ``n_layers=1`` and
+``max_features="sqrt"`` the model reduces to a standard RandomForest.
 """
 
 from __future__ import annotations
@@ -25,7 +26,7 @@ from ..objective.regression import BaseObjective
 from ..predictor.predictor import DeepGBoostPredictor
 
 if TYPE_CHECKING:
-    from ..callback import TrainingCallback
+    from ..callbacks.base_callback import TrainingCallback
 
 
 class DGBFModel:
@@ -45,6 +46,13 @@ class DGBFModel:
         Number of boosting layers (L) — analogous to the depth.
     max_depth : int or None
         Maximum depth of each decision tree.
+    max_features : int, float, str or None
+        Number of features considered at each split within a tree.  Mirrors
+        ``sklearn``'s ``DecisionTreeRegressor.max_features``.  Defaults to
+        ``None`` (all features), preserving the original DGBF behaviour.
+        Set to ``"sqrt"`` for the standard Random Forest feature subsampling;
+        combined with ``n_layers=1`` the model becomes analogous to a
+        RandomForest.
     learning_rate : float
         Shrinkage factor applied to the pseudo-residuals before fitting each
         layer.
@@ -58,9 +66,10 @@ class DGBFModel:
         Minimum subsample fraction at the first layer.  Grows linearly to 1.0
         at the last layer (dynamic sampling, paper sec. 3.1.3).
     weight_solver : str
-        Method for solving the tree-output weights.  ``"nnls"`` uses
-        non-negative least squares (fast, no equality constraint needed;
-        result is renormalised to sum=1).
+        Method for combining the T bagged trees in each layer.
+        ``"nnls"`` uses Non-Negative Least Squares to find optimal weights
+        (result is renormalised to sum=1).  ``"uniform"`` assigns equal
+        weight ``1/n_trees`` to every tree, exactly as in RandomForest.
     objective : str or BaseObjective
         Loss function.  String aliases: ``"reg:squarederror"``,
         ``"reg:absoluteerror"``, ``"binary:logistic"``, ``"multi:softmax"``.
@@ -73,6 +82,7 @@ class DGBFModel:
         n_trees: int = 10,
         n_layers: int = 10,
         max_depth: int | None = None,
+        max_features: int | float | str | None = None,
         learning_rate: float = 0.1,
         linear_projection: bool = False,
         linear_alpha: float = 1.0,
@@ -84,6 +94,7 @@ class DGBFModel:
         self.n_trees = n_trees
         self.n_layers = n_layers
         self.max_depth = max_depth
+        self.max_features = max_features
         self.learning_rate = learning_rate
         self.linear_projection = linear_projection
         self.linear_alpha = linear_alpha
@@ -94,7 +105,9 @@ class DGBFModel:
 
         # Fitted state (set during fit)
         self.graph_: list[list[TreeUpdater]] = []
-        self.weights_: list[list[np.ndarray]] = []
+        # weights_[l] is a 1-D array of shape (n_trees,): the combination
+        # weights for the T bagged trees in layer l.
+        self.weights_: list[np.ndarray] = []
         self.linear_models_: list[LinearUpdater] = []
         self.prior_: float = 0.0
         self.feature_importances_: np.ndarray | None = None
@@ -176,11 +189,8 @@ class DGBFModel:
             # independent bootstrap subsamples and multi-output regression)
             g_global = obj.gradient(y, F_prev)  # (n_samples,)
 
-            # Pseudo-residuals matrix: (n_samples, n_trees)
-            # Each column t contains the residuals for tree slot t
-            pseudo_y = np.column_stack(
-                [g_global * self.learning_rate] * self.n_trees
-            )
+            # Shrunk pseudo-residuals shared by all T bagged trees in the layer
+            pseudo_y = g_global * self.learning_rate  # (n_samples,)
 
             # Before-iteration callbacks
             stop = False
@@ -192,7 +202,9 @@ class DGBFModel:
                 break
 
             # --- Fit this layer ------------------------------------------
-            new_layer, new_weights = self._fit_layer(X, pseudo_y, layer_idx, rng)
+            new_layer, new_weights = self._fit_layer(
+                X, pseudo_y, layer_idx, rng
+            )
             self.graph_.append(new_layer)
             self.weights_.append(new_weights)
 
@@ -206,12 +218,11 @@ class DGBFModel:
                     rng,
                 )
                 lin = LinearUpdater(alpha=self.linear_alpha)
-                lin.fit(X[sample_idx], pseudo_y[sample_idx].mean(axis=1))
+                lin.fit(X[sample_idx], pseudo_y[sample_idx])
                 # Mix weight: fraction of variance explained by linear model
                 lin_pred_full = lin.predict(X)
-                resid_full = pseudo_y.mean(axis=1)
-                var_total = np.var(resid_full) + 1e-10
-                var_lin = np.var(resid_full - lin_pred_full)
+                var_total = np.var(pseudo_y) + 1e-10
+                var_lin = np.var(pseudo_y - lin_pred_full)
                 lin.alpha_mix_ = float(
                     np.clip(1.0 - var_lin / var_total, 0.0, 1.0)
                 )
@@ -259,52 +270,69 @@ class DGBFModel:
         pseudo_y: np.ndarray,
         layer_idx: int,
         rng: np.random.Generator,
-    ) -> tuple[list[TreeUpdater], list[np.ndarray]]:
+    ) -> tuple[list[TreeUpdater], np.ndarray]:
         """
-        Fit all T trees for layer ``layer_idx``.
+        Fit all T trees for layer ``layer_idx`` using bagging.
 
-        For each tree t:
-        1. Draw a dynamic bootstrap subsample.
-        2. Fit a multi-output CART on the subsample.
-        3. Compute optimal output weights on the full training set.
+        Each tree is trained independently on:
+        * a dynamic bootstrap row-subsample (paper sec. 3.1.3), and
+        * a random feature subset governed by ``max_features``.
+
+        After fitting, a single weight vector of length T is computed via
+        NNLS on the full dataset to optimally combine the T tree predictions.
+
+        Parameters
+        ----------
+        X : (n_samples, n_features)
+        pseudo_y : (n_samples,)
+            Shrunk pseudo-residuals for this layer.
+        layer_idx : int
+        rng : np.random.Generator
 
         Returns
         -------
         new_layer : list of TreeUpdater, length n_trees
-        new_weights : list of np.ndarray, length n_trees
+        layer_weights : np.ndarray of shape (n_trees,)
+            One combination weight per bagged tree.
         """
         n_samples = X.shape[0]
         new_layer: list[TreeUpdater] = []
-        new_weights: list[np.ndarray] = []
+        tree_preds: list[np.ndarray] = []
 
         for t in range(self.n_trees):
             # Dynamic bootstrap subsample (paper sec. 3.1.3)
             sample_idx = bootstrap_sampler(
-                n_samples,
-                self.n_layers,
-                layer_idx,
-                self.subsample_min_frac,
-                rng,
+                n_samples=n_samples,
+                n_layers=self.n_layers,
+                layer_idx=layer_idx,
+                subsample_min_frac=self.subsample_min_frac,
+                rng=rng,
             )
 
             # Derive per-tree seed from master rng
             tree_seed = int(rng.integers(0, 2**31))
 
-            tree = TreeUpdater(max_depth=self.max_depth, random_state=tree_seed)
+            tree = TreeUpdater(
+                max_depth=self.max_depth,
+                max_features=self.max_features,
+                random_state=tree_seed,
+            )
             tree.fit(X[sample_idx], pseudo_y[sample_idx])
 
-            # Compute output weights (paper eq. 11) on FULL dataset
-            tree_out_full = tree.predict(X)  # (n_samples, n_trees)
-            y_target = pseudo_y.mean(axis=1)  # (n_samples,) — mean gradient
-
-            w = weight_solver(
-                tree_out_full, y_target, method=self.weight_solver
-            )
-
             new_layer.append(tree)
-            new_weights.append(w)
+            tree_preds.append(tree.predict(X)[:, 0])  # (n_samples,)
 
-        return new_layer, new_weights
+        # Stack per-tree predictions: (n_samples, n_trees)
+        all_preds = np.column_stack(tree_preds)
+
+        # Single weight vector for the layer (paper eq. 11)
+        layer_weights = weight_solver(
+            all_preds,
+            pseudo_y,
+            method=self.weight_solver,
+        )
+
+        return new_layer, layer_weights
 
     # ------------------------------------------------------------------
     # Inference
@@ -352,6 +380,7 @@ class DGBFModel:
             "n_trees": self.n_trees,
             "n_layers": self.n_layers,
             "max_depth": self.max_depth,
+            "max_features": self.max_features,
             "learning_rate": self.learning_rate,
             "linear_projection": self.linear_projection,
             "linear_alpha": self.linear_alpha,

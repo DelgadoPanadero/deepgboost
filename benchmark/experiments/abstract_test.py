@@ -30,7 +30,10 @@ class AbstractModelTest:
         reference = model_names[-1]
         ref_scores = scores_dict[reference]
 
-        lines = [f"{n} Score: {s.mean():.4f} +- {s.std():.4f}" for n, s in scores_dict.items()]
+        lines = [
+            f"{n} Score: {s.mean():.4f} +- {s.std():.4f}"
+            for n, s in scores_dict.items()
+        ]
         for model_name, scores in scores_dict.items():
             if model_name != reference:
                 diff = ref_scores - scores
@@ -38,7 +41,9 @@ class AbstractModelTest:
                     f"Difference ({reference} - {model_name}): {diff.mean():.4f} +- {diff.std():.4f}"
                 )
 
-        file_name = f"{BENCHMARK_DIR}/results/{name.replace(' ', '_').lower()}.txt"
+        file_name = (
+            f"{BENCHMARK_DIR}/results/{name.replace(' ', '_').lower()}.txt"
+        )
         with open(file_name, "w") as file:
             file.write("\n".join(lines))
 
@@ -53,7 +58,11 @@ class AbstractModelTest:
         score_arrays = list(scores_dict.values())
         for values in zip(*score_arrays):
             diffs = [values[-1] - v for v in values[:-1]]
-            rows.append(", ".join(f"{v}" for v in values) + ", " + ", ".join(f"{d}" for d in diffs))
+            rows.append(
+                ", ".join(f"{v}" for v in values)
+                + ", "
+                + ", ".join(f"{d}" for d in diffs)
+            )
 
         file_name = f"{BENCHMARK_DIR}/results/{name.replace(' ', '_').lower()}_scores.csv"
         with open(file_name, "w") as file:
@@ -82,7 +91,12 @@ class AbstractModelTest:
         for model_name in model_names[:-1]:
             differences = ref_scores - scores_dict[model_name]
             bins = np.linspace(differences.min(), differences.max(), n_bins)
-            plt.hist(differences, bins, alpha=0.5, label=f"{self.metric_name} diff {model_name}")
+            plt.hist(
+                differences,
+                bins,
+                alpha=0.5,
+                label=f"{self.metric_name} diff {model_name}",
+            )
 
         plt.title(f"{name} Paired {self.metric_name} Difference")
         plt.xlabel(f"Paired {self.metric_name} Difference")

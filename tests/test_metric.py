@@ -4,12 +4,15 @@ import numpy as np
 import pytest
 
 from deepgboost.metric.regression import RMSEMetric, MAEMetric, R2ScoreMetric
-from deepgboost.metric.classification import AccuracyMetric, LogLossMetric, AUCMetric
+from deepgboost.metric.classification import (
+    AccuracyMetric,
+    LogLossMetric,
+    AUCMetric,
+)
 from deepgboost.metric import get_metric
 
 
 class TestRMSEMetric:
-
     def test_zero_error(self):
         metric = RMSEMetric()
         y = np.array([1.0, 2.0, 3.0])
@@ -32,7 +35,6 @@ class TestRMSEMetric:
 
 
 class TestMAEMetric:
-
     def test_zero_error(self):
         metric = MAEMetric()
         y = np.array([1.0, 2.0, 3.0])
@@ -49,7 +51,6 @@ class TestMAEMetric:
 
 
 class TestR2ScoreMetric:
-
     def test_perfect_prediction(self):
         metric = R2ScoreMetric()
         y = np.array([1.0, 2.0, 3.0])
@@ -77,7 +78,6 @@ class TestR2ScoreMetric:
 
 
 class TestAccuracyMetric:
-
     def test_perfect_accuracy(self):
         metric = AccuracyMetric()
         y = np.array([0, 1, 1, 0])
@@ -100,7 +100,6 @@ class TestAccuracyMetric:
 
 
 class TestLogLossMetric:
-
     def test_perfect_predictions(self):
         metric = LogLossMetric()
         y = np.array([0.0, 1.0])
@@ -125,7 +124,6 @@ class TestLogLossMetric:
 
 
 class TestAUCMetric:
-
     def test_perfect_auc(self):
         metric = AUCMetric()
         y = np.array([0, 0, 1, 1])
@@ -149,7 +147,6 @@ class TestAUCMetric:
 
 
 class TestGetMetric:
-
     def test_known_metrics(self):
         for name in ["rmse", "mae", "r2", "accuracy", "logloss", "auc"]:
             m = get_metric(name)

@@ -2,8 +2,8 @@
 Tree updater for DeepGBoost.
 
 Each ``TreeUpdater`` wraps a single ``DecisionTreeRegressor`` and trains it
-on multi-output pseudo-residuals (shape n_sub × n_trees), implementing the
-distributed gradient learning described in Algorithm 1 of the paper.
+on a 1-D pseudo-residual vector, implementing the bagging base learner
+described in Algorithm 1 of the paper.
 """
 
 from __future__ import annotations
@@ -14,16 +14,16 @@ from sklearn.tree import DecisionTreeRegressor
 
 class TreeUpdater:
     """
-    Wraps a single CART tree for multi-output gradient fitting.
-
-    The tree learns T gradient components simultaneously (one per tree slot
-    in the layer), which is the key operation behind the distributed gradient
-    representation of DGBF.
+    Wraps a single CART tree for gradient fitting.
 
     Parameters
     ----------
     max_depth : int or None
         Maximum depth of the underlying decision tree.
+    max_features : int, float, str or None
+        Number of features to consider at each split (passed directly to
+        ``DecisionTreeRegressor``).  Use ``"sqrt"`` for the Random Forest
+        default.
     random_state : int or None
         Seed for the underlying tree splitter.
     """
@@ -31,12 +31,15 @@ class TreeUpdater:
     def __init__(
         self,
         max_depth: int | None = None,
+        max_features: int | float | str | None = None,
         random_state: int | None = None,
     ):
         self.max_depth = max_depth
+        self.max_features = max_features
         self.random_state = random_state
         self._tree = DecisionTreeRegressor(
             max_depth=max_depth,
+            max_features=max_features,
             random_state=random_state,
         )
 
@@ -51,8 +54,8 @@ class TreeUpdater:
         Parameters
         ----------
         X_sub : (n_sub, n_features)
-        pseudo_y_sub : (n_sub, n_trees)
-            Multi-output pseudo-residuals — one column per tree slot.
+        pseudo_y_sub : (n_sub,)
+            1-D pseudo-residuals for this tree's slot.
 
         Returns
         -------

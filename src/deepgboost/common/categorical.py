@@ -1,4 +1,5 @@
 """Mixin for automatic categorical feature encoding."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -34,7 +35,9 @@ class CategoricalEncoderMixin:
             i for i in range(X_arr.shape[1]) if i not in cat_cols
         ]
         if cat_cols:
-            self.ohe_ = OneHotEncoder(sparse_output=False, handle_unknown="ignore")
+            self.ohe_ = OneHotEncoder(
+                sparse_output=False, handle_unknown="ignore"
+            )
             X_cat = self.ohe_.fit_transform(X_arr[:, cat_cols])
             return self._assemble(X_arr, X_cat)
         self.ohe_ = None

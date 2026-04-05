@@ -16,11 +16,12 @@ from __future__ import annotations
 from typing import Sequence
 
 import numpy as np
-from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.base import BaseEstimator
+from sklearn.base import RegressorMixin
 from sklearn.utils.validation import check_is_fitted
 
 from .gbm.dgbf import DGBFModel
-from .callback import TrainingCallback
+from .callbacks.base_callback import TrainingCallback
 from .common.categorical import CategoricalEncoderMixin
 
 
@@ -28,14 +29,18 @@ from .common.categorical import CategoricalEncoderMixin
 # Shared parameter defaults (mirrors XGBModel grouping)
 # ---------------------------------------------------------------------------
 
-_TREE_PARAMS = ("n_trees", "n_layers", "max_depth")
-_LEARNING_PARAMS = ("learning_rate", "subsample_min_frac")
+_TREE_PARAMS = ("n_trees", "n_layers", "max_depth", "max_features")
+_LEARNING_PARAMS = ("learning_rate", "subsample_min_frac", "weight_solver")
 _REGULARISATION_PARAMS = ("linear_projection", "linear_alpha")
 _CONFIG_PARAMS = ("objective", "random_state", "n_jobs")
 _CALLBACK_PARAMS = ("early_stopping_rounds", "eval_metric")
 
 
-class DeepGBoostRegressor(CategoricalEncoderMixin, BaseEstimator, RegressorMixin):
+class DeepGBoostRegressor(
+    CategoricalEncoderMixin,
+    BaseEstimator,
+    RegressorMixin,
+):
     """
     DeepGBoost regressor — sklearn-compatible interface.
 
@@ -50,10 +55,22 @@ class DeepGBoostRegressor(CategoricalEncoderMixin, BaseEstimator, RegressorMixin
         Number of boosting layers (L).
     max_depth : int or None, default=None
         Maximum depth of each decision tree.
+    max_features : int, float, str or None, default=None
+        Number of features to consider at each split.  ``None`` uses all
+        features (original DGBF behaviour).  Set to ``"sqrt"`` for the
+        standard Random Forest feature subsampling; combined with
+        ``n_layers=1`` the model becomes analogous to a RandomForest.
     learning_rate : float, default=0.1
         Shrinkage factor applied to pseudo-residuals each layer.
     subsample_min_frac : float, default=0.3
         Minimum subsample fraction at the first layer (grows to 1.0).
+    weight_solver : str, default="nnls"
+        How to combine the T bagged trees in each layer.  ``"nnls"`` finds
+        optimal non-negative weights via Non-Negative Least Squares.
+        ``"uniform"`` assigns equal weight to every tree (standard
+        RandomForest averaging); with ``n_layers=1`` and
+        ``learning_rate=1.0`` this makes the model exactly equivalent to a
+        RandomForest.
     linear_projection : bool, default=False
         Add a Ridge regression correction at each layer (XGBoost gblinear
         analogue) to capture linear trends that trees cannot model.
@@ -78,8 +95,10 @@ class DeepGBoostRegressor(CategoricalEncoderMixin, BaseEstimator, RegressorMixin
         n_trees: int = 10,
         n_layers: int = 10,
         max_depth: int | None = None,
+        max_features: int | float | str | None = None,
         learning_rate: float = 0.1,
         subsample_min_frac: float = 0.3,
+        weight_solver: str = "nnls",
         linear_projection: bool = False,
         linear_alpha: float = 1.0,
         objective: str = "reg:squarederror",
@@ -91,8 +110,10 @@ class DeepGBoostRegressor(CategoricalEncoderMixin, BaseEstimator, RegressorMixin
         self.n_trees = n_trees
         self.n_layers = n_layers
         self.max_depth = max_depth
+        self.max_features = max_features
         self.learning_rate = learning_rate
         self.subsample_min_frac = subsample_min_frac
+        self.weight_solver = weight_solver
         self.linear_projection = linear_projection
         self.linear_alpha = linear_alpha
         self.objective = objective
@@ -137,10 +158,12 @@ class DeepGBoostRegressor(CategoricalEncoderMixin, BaseEstimator, RegressorMixin
             n_trees=self.n_trees,
             n_layers=self.n_layers,
             max_depth=self.max_depth,
+            max_features=self.max_features,
             learning_rate=self.learning_rate,
+            subsample_min_frac=self.subsample_min_frac,
+            weight_solver=self.weight_solver,
             linear_projection=self.linear_projection,
             linear_alpha=self.linear_alpha,
-            subsample_min_frac=self.subsample_min_frac,
             objective=self.objective,
             random_state=self.random_state,
         )
@@ -158,13 +181,18 @@ class DeepGBoostRegressor(CategoricalEncoderMixin, BaseEstimator, RegressorMixin
                 for i, (Xv, yv) in enumerate(eval_set)
             ]
             if self.early_stopping_rounds is not None:
-                from .callback import EarlyStopping
+                from .callbacks import EarlyStopping
 
                 all_callbacks.append(
                     EarlyStopping(patience=self.early_stopping_rounds)
                 )
 
-        self.model_.fit(X, y, callbacks=all_callbacks, evals=raw_evals)
+        self.model_.fit(
+            X=X,
+            y=y,
+            callbacks=all_callbacks,
+            evals=raw_evals,
+        )
         self.n_features_in_ = X.shape[1]
         return self
 
@@ -184,7 +212,12 @@ class DeepGBoostRegressor(CategoricalEncoderMixin, BaseEstimator, RegressorMixin
         X = self._transform_X(X)
         return self.model_.predict(X)
 
-    def score(self, X, y, sample_weight=None) -> float:
+    def score(
+        self,
+        X,
+        y,
+        sample_weight=None,
+    ) -> float:
         """Return the R² coefficient of determination."""
         check_is_fitted(self, "model_")
         from .metric.regression import R2ScoreMetric

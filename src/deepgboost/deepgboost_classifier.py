@@ -21,7 +21,7 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.preprocessing import LabelEncoder
 
 from .gbm.dgbf import DGBFModel
-from .callback import TrainingCallback
+from .callbacks.base_callback import TrainingCallback
 from .common.utils import sigmoid, softmax
 from .common.categorical import CategoricalEncoderMixin
 
@@ -30,14 +30,16 @@ from .common.categorical import CategoricalEncoderMixin
 # Shared parameter defaults (mirrors XGBModel grouping)
 # ---------------------------------------------------------------------------
 
-_TREE_PARAMS = ("n_trees", "n_layers", "max_depth")
-_LEARNING_PARAMS = ("learning_rate", "subsample_min_frac")
+_TREE_PARAMS = ("n_trees", "n_layers", "max_depth", "max_features")
+_LEARNING_PARAMS = ("learning_rate", "subsample_min_frac", "weight_solver")
 _REGULARISATION_PARAMS = ("linear_projection", "linear_alpha")
 _CONFIG_PARAMS = ("objective", "random_state", "n_jobs")
 _CALLBACK_PARAMS = ("early_stopping_rounds", "eval_metric")
 
 
-class DeepGBoostClassifier(CategoricalEncoderMixin, BaseEstimator, ClassifierMixin):
+class DeepGBoostClassifier(
+    CategoricalEncoderMixin, BaseEstimator, ClassifierMixin
+):
     """
     DeepGBoost classifier — sklearn-compatible interface.
 
@@ -56,10 +58,19 @@ class DeepGBoostClassifier(CategoricalEncoderMixin, BaseEstimator, ClassifierMix
         Number of boosting layers.
     max_depth : int or None, default=None
         Maximum depth of each decision tree.
+    max_features : int, float, str or None, default=None
+        Number of features to consider at each split.  ``None`` uses all
+        features (original DGBF behaviour).  Set to ``"sqrt"`` for the
+        standard Random Forest feature subsampling; combined with
+        ``n_layers=1`` the model becomes analogous to a RandomForest.
     learning_rate : float, default=0.1
         Shrinkage factor.
     subsample_min_frac : float, default=0.3
         Minimum subsample fraction at layer 0.
+    weight_solver : str, default="nnls"
+        How to combine the T bagged trees in each layer.  ``"nnls"`` finds
+        optimal non-negative weights.  ``"uniform"`` assigns equal weight to
+        every tree (standard RandomForest averaging).
     linear_projection : bool, default=False
         Add Ridge regression correction per layer.
     linear_alpha : float, default=1.0
@@ -81,8 +92,10 @@ class DeepGBoostClassifier(CategoricalEncoderMixin, BaseEstimator, ClassifierMix
         n_trees: int = 10,
         n_layers: int = 10,
         max_depth: int | None = None,
+        max_features: int | float | str | None = None,
         learning_rate: float = 0.1,
         subsample_min_frac: float = 0.3,
+        weight_solver: str = "nnls",
         linear_projection: bool = False,
         linear_alpha: float = 1.0,
         objective: str | None = None,
@@ -94,8 +107,10 @@ class DeepGBoostClassifier(CategoricalEncoderMixin, BaseEstimator, ClassifierMix
         self.n_trees = n_trees
         self.n_layers = n_layers
         self.max_depth = max_depth
+        self.max_features = max_features
         self.learning_rate = learning_rate
         self.subsample_min_frac = subsample_min_frac
+        self.weight_solver = weight_solver
         self.linear_projection = linear_projection
         self.linear_alpha = linear_alpha
         self.objective = objective
@@ -148,10 +163,12 @@ class DeepGBoostClassifier(CategoricalEncoderMixin, BaseEstimator, ClassifierMix
             n_trees=self.n_trees,
             n_layers=self.n_layers,
             max_depth=self.max_depth,
+            max_features=self.max_features,
             learning_rate=self.learning_rate,
+            subsample_min_frac=self.subsample_min_frac,
+            weight_solver=self.weight_solver,
             linear_projection=self.linear_projection,
             linear_alpha=self.linear_alpha,
-            subsample_min_frac=self.subsample_min_frac,
             random_state=self.random_state,
         )
 
@@ -160,7 +177,7 @@ class DeepGBoostClassifier(CategoricalEncoderMixin, BaseEstimator, ClassifierMix
 
         all_callbacks = list(callbacks or [])
         if self.early_stopping_rounds is not None and eval_set:
-            from .callback import EarlyStopping
+            from .callbacks.base_callback import EarlyStopping
 
             all_callbacks.append(
                 EarlyStopping(patience=self.early_stopping_rounds)
@@ -169,7 +186,7 @@ class DeepGBoostClassifier(CategoricalEncoderMixin, BaseEstimator, ClassifierMix
         if n_classes == 2:
             # Binary classification
             self._binary_model = self._fit_binary(
-                X, y_enc.astype(np.float64), eval_set, all_callbacks, model_kw
+                X, y_enc.astype(np.float64), eval_set, all_callbacks, model_kw,
             )
         else:
             # Multiclass: one-vs-rest
