@@ -1,6 +1,7 @@
 import os
 from .tools import ConfigParser
 from .tools import ExperimentRunner
+from .tools import BenchmarkGenerator
 
 
 if __name__ == "__main__":
@@ -10,3 +11,4 @@ if __name__ == "__main__":
 
     runner = ExperimentRunner(config)
     runner.run()
+    BenchmarkGenerator().save()
