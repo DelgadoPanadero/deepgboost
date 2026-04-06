@@ -25,17 +25,6 @@ from .callbacks.base_callback import TrainingCallback
 from .common.categorical import CategoricalEncoderMixin
 
 
-# ---------------------------------------------------------------------------
-# Shared parameter defaults (mirrors XGBModel grouping)
-# ---------------------------------------------------------------------------
-
-_TREE_PARAMS = ("n_trees", "n_layers", "max_depth", "max_features")
-_LEARNING_PARAMS = ("learning_rate", "subsample_min_frac", "weight_solver")
-_REGULARISATION_PARAMS = ("linear_projection", "linear_alpha")
-_CONFIG_PARAMS = ("objective", "random_state", "n_jobs")
-_CALLBACK_PARAMS = ("early_stopping_rounds", "eval_metric")
-
-
 class DeepGBoostRegressor(
     CategoricalEncoderMixin,
     BaseEstimator,
@@ -181,10 +170,10 @@ class DeepGBoostRegressor(
                 for i, (Xv, yv) in enumerate(eval_set)
             ]
             if self.early_stopping_rounds is not None:
-                from .callbacks import EarlyStopping
+                from .callbacks import EarlyStoppingCallback
 
                 all_callbacks.append(
-                    EarlyStopping(patience=self.early_stopping_rounds)
+                    EarlyStoppingCallback(patience=self.early_stopping_rounds)
                 )
 
         self.model_.fit(
@@ -227,7 +216,11 @@ class DeepGBoostRegressor(
     @property
     def feature_importances_(self) -> np.ndarray:
         check_is_fitted(self, "model_")
-        return self.model_.feature_importances_
+
+        if (feature_importances:= self.model_.feature_importances_) is None:
+            raise Exception()
+
+        return feature_importances
 
     @property
     def evals_result_(self) -> dict:

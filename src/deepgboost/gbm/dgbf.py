@@ -188,9 +188,13 @@ class DGBFModel:
             # in this implementation — each tree learns its own component via
             # independent bootstrap subsamples and multi-output regression)
             g_global = obj.gradient(y, F_prev)  # (n_samples,)
+            h_global = obj.hessian(y, F_prev)   # (n_samples,)
 
-            # Shrunk pseudo-residuals shared by all T bagged trees in the layer
-            pseudo_y = g_global * self.learning_rate  # (n_samples,)
+            # Newton step: g/h scales the update correctly for objectives whose
+            # Hessian varies with F (e.g. logistic: h = p*(1-p)).  For MSE the
+            # Hessian is 1 everywhere, so this reduces to the original gradient
+            # step.  Clipping h avoids division by zero near p=0 or p=1.
+            pseudo_y = (g_global / np.maximum(h_global, 1e-7)) * self.learning_rate  # (n_samples,)
 
             # Before-iteration callbacks
             stop = False
