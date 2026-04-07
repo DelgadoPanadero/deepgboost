@@ -26,11 +26,9 @@
       "module": "benchmark.models",
       "object": "DeepGBoostModel",
       "parameters": {
-        "n_layers": 4,
+        "n_layers": 5,
+        "n_trees": 20,
         "learning_rate": 0.8,
-        "n_trees": 25,
-        "subsample_min_frac": 0.3,
-        "weight_solver": "nnls",
         "n_jobs": 8
       }
     }
@@ -61,13 +59,9 @@
       "module": "benchmark.models",
       "object": "DeepGBoostClassifierModel",
       "parameters": {
-        "n_layers": 10,
-        "n_trees": 10,
-        "learning_rate": 0.3,
-        "max_depth": 6,
-        "max_features": null,
-        "subsample_min_frac": 0.3,
-        "weight_solver": "nnls",
+        "n_layers": 20,
+        "n_trees": 5,
+        "learning_rate": 0.1,
         "n_jobs": 8
       }
     }
