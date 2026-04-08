@@ -81,8 +81,8 @@ class DeepGBoostClassifier(
 
     def __init__(
         self,
-        n_trees: int = 10,
-        n_layers: int = 10,
+        n_trees: int = 5,
+        n_layers: int = 20,
         max_depth: int | None = None,
         max_features: int | float | str | None = None,
         learning_rate: float = 0.1,
