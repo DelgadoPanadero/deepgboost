@@ -25,17 +25,6 @@ from .callbacks.base_callback import TrainingCallback
 from .common.categorical import CategoricalEncoderMixin
 
 
-# ---------------------------------------------------------------------------
-# Shared parameter defaults (mirrors XGBModel grouping)
-# ---------------------------------------------------------------------------
-
-_TREE_PARAMS = ("n_trees", "n_layers", "max_depth", "max_features")
-_LEARNING_PARAMS = ("learning_rate", "subsample_min_frac", "weight_solver")
-_REGULARISATION_PARAMS = ("linear_projection", "linear_alpha")
-_CONFIG_PARAMS = ("objective", "random_state", "n_jobs")
-_CALLBACK_PARAMS = ("early_stopping_rounds", "eval_metric")
-
-
 class DeepGBoostRegressor(
     CategoricalEncoderMixin,
     BaseEstimator,
@@ -71,6 +60,11 @@ class DeepGBoostRegressor(
         RandomForest averaging); with ``n_layers=1`` and
         ``learning_rate=1.0`` this makes the model exactly equivalent to a
         RandomForest.
+    hessian_reg : float, default=0.0
+        L2 regularisation added to the Hessian denominator of the Newton step:
+        ``pseudo_y = g / (h + hessian_reg) * lr``.  Mirrors XGBoost's
+        ``lambda`` parameter.  For MSE regression (h=1 everywhere) the
+        effect is negligible at the default value of 0.0.
     linear_projection : bool, default=False
         Add a Ridge regression correction at each layer (XGBoost gblinear
         analogue) to capture linear trends that trees cannot model.
@@ -92,13 +86,14 @@ class DeepGBoostRegressor(
 
     def __init__(
         self,
-        n_trees: int = 10,
-        n_layers: int = 10,
+        n_trees: int = 20,
+        n_layers: int = 5,
         max_depth: int | None = None,
         max_features: int | float | str | None = None,
-        learning_rate: float = 0.1,
+        learning_rate: float = 0.8,
         subsample_min_frac: float = 0.3,
         weight_solver: str = "nnls",
+        hessian_reg: float = 0.0,
         linear_projection: bool = False,
         linear_alpha: float = 1.0,
         objective: str = "reg:squarederror",
@@ -114,6 +109,7 @@ class DeepGBoostRegressor(
         self.learning_rate = learning_rate
         self.subsample_min_frac = subsample_min_frac
         self.weight_solver = weight_solver
+        self.hessian_reg = hessian_reg
         self.linear_projection = linear_projection
         self.linear_alpha = linear_alpha
         self.objective = objective
@@ -162,6 +158,7 @@ class DeepGBoostRegressor(
             learning_rate=self.learning_rate,
             subsample_min_frac=self.subsample_min_frac,
             weight_solver=self.weight_solver,
+            hessian_reg=self.hessian_reg,
             linear_projection=self.linear_projection,
             linear_alpha=self.linear_alpha,
             objective=self.objective,
@@ -181,10 +178,10 @@ class DeepGBoostRegressor(
                 for i, (Xv, yv) in enumerate(eval_set)
             ]
             if self.early_stopping_rounds is not None:
-                from .callbacks import EarlyStopping
+                from .callbacks import EarlyStoppingCallback
 
                 all_callbacks.append(
-                    EarlyStopping(patience=self.early_stopping_rounds)
+                    EarlyStoppingCallback(patience=self.early_stopping_rounds)
                 )
 
         self.model_.fit(
@@ -227,7 +224,11 @@ class DeepGBoostRegressor(
     @property
     def feature_importances_(self) -> np.ndarray:
         check_is_fitted(self, "model_")
-        return self.model_.feature_importances_
+
+        if (feature_importances:= self.model_.feature_importances_) is None:
+            raise Exception()
+
+        return feature_importances
 
     @property
     def evals_result_(self) -> dict:

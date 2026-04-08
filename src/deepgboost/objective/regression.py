@@ -36,6 +36,20 @@ class BaseObjective:
         """Optimal constant prediction (F_0 in the paper)."""
         raise NotImplementedError
 
+    def hessian(
+        self,
+        y: np.ndarray,
+        F: np.ndarray,
+    ) -> np.ndarray:
+        """
+        Diagonal of the loss Hessian w.r.t. F (second derivatives).
+
+        Returns ones by default, which is exact for MSE and a safe constant
+        for MAE (non-differentiable).  Override for objectives where the
+        Hessian varies with F (e.g. logistic).
+        """
+        return np.ones_like(F)
+
     def transform(
         self,
         raw: np.ndarray,

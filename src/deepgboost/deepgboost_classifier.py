@@ -26,17 +26,6 @@ from .common.utils import sigmoid, softmax
 from .common.categorical import CategoricalEncoderMixin
 
 
-# ---------------------------------------------------------------------------
-# Shared parameter defaults (mirrors XGBModel grouping)
-# ---------------------------------------------------------------------------
-
-_TREE_PARAMS = ("n_trees", "n_layers", "max_depth", "max_features")
-_LEARNING_PARAMS = ("learning_rate", "subsample_min_frac", "weight_solver")
-_REGULARISATION_PARAMS = ("linear_projection", "linear_alpha")
-_CONFIG_PARAMS = ("objective", "random_state", "n_jobs")
-_CALLBACK_PARAMS = ("early_stopping_rounds", "eval_metric")
-
-
 class DeepGBoostClassifier(
     CategoricalEncoderMixin, BaseEstimator, ClassifierMixin
 ):
@@ -69,8 +58,11 @@ class DeepGBoostClassifier(
         Minimum subsample fraction at layer 0.
     weight_solver : str, default="nnls"
         How to combine the T bagged trees in each layer.  ``"nnls"`` finds
-        optimal non-negative weights.  ``"uniform"`` assigns equal weight to
-        every tree (standard RandomForest averaging).
+        optimal non-negative weights; ``"uniform"`` assigns equal weight.
+    hessian_reg : float, default=0.0
+        L2 regularisation added to the Hessian denominator of the Newton step:
+        ``pseudo_y = g / (h + hessian_reg) * lr``.  Mirrors XGBoost's
+        ``lambda`` parameter — set to 1.0 for XGBoost-equivalent behaviour.
     linear_projection : bool, default=False
         Add Ridge regression correction per layer.
     linear_alpha : float, default=1.0
@@ -89,13 +81,14 @@ class DeepGBoostClassifier(
 
     def __init__(
         self,
-        n_trees: int = 10,
-        n_layers: int = 10,
+        n_trees: int = 5,
+        n_layers: int = 20,
         max_depth: int | None = None,
         max_features: int | float | str | None = None,
         learning_rate: float = 0.1,
         subsample_min_frac: float = 0.3,
         weight_solver: str = "nnls",
+        hessian_reg: float = 0.0,
         linear_projection: bool = False,
         linear_alpha: float = 1.0,
         objective: str | None = None,
@@ -111,6 +104,7 @@ class DeepGBoostClassifier(
         self.learning_rate = learning_rate
         self.subsample_min_frac = subsample_min_frac
         self.weight_solver = weight_solver
+        self.hessian_reg = hessian_reg
         self.linear_projection = linear_projection
         self.linear_alpha = linear_alpha
         self.objective = objective
@@ -167,6 +161,7 @@ class DeepGBoostClassifier(
             learning_rate=self.learning_rate,
             subsample_min_frac=self.subsample_min_frac,
             weight_solver=self.weight_solver,
+            hessian_reg=self.hessian_reg,
             linear_projection=self.linear_projection,
             linear_alpha=self.linear_alpha,
             random_state=self.random_state,
@@ -177,10 +172,10 @@ class DeepGBoostClassifier(
 
         all_callbacks = list(callbacks or [])
         if self.early_stopping_rounds is not None and eval_set:
-            from .callbacks.base_callback import EarlyStopping
+            from .callbacks import EarlyStoppingCallback
 
             all_callbacks.append(
-                EarlyStopping(patience=self.early_stopping_rounds)
+                EarlyStoppingCallback(patience=self.early_stopping_rounds)
             )
 
         if n_classes == 2:

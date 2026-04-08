@@ -103,7 +103,6 @@ def weight_solver(
     total = weights.sum()
     if total == 0.0:
         return np.full(n_outputs, 1.0 / n_outputs)
-
     return weights / total
 
 

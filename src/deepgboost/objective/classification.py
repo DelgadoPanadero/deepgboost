@@ -25,6 +25,15 @@ class LogisticObjective(BaseObjective):
     ) -> np.ndarray:
         return y - sigmoid(F)
 
+    def hessian(
+        self,
+        y: np.ndarray,
+        F: np.ndarray,
+    ) -> np.ndarray:
+        """h_i = p_i * (1 - p_i),  p_i = sigmoid(F_i)."""
+        p = sigmoid(F)
+        return p * (1.0 - p)
+
     def prior(
         self,
         y: np.ndarray,
@@ -65,6 +74,15 @@ class SoftmaxObjective(BaseObjective):
         F : (n_samples, n_classes) raw log-scores.
         """
         return y - softmax(F, axis=1)
+
+    def hessian(
+        self,
+        y: np.ndarray,
+        F: np.ndarray,
+    ) -> np.ndarray:
+        """Diagonal of the per-class Hessian: p_k * (1 - p_k)."""
+        p = softmax(F, axis=1)
+        return p * (1.0 - p)
 
     def prior(
         self,
