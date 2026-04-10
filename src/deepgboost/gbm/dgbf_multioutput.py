@@ -128,6 +128,7 @@ class DGBFMultiOutputModel:
         self.prior_ = obj.prior(y)  # (K,)
         self.n_features_in_ = n_features
         self.evals_result_ = {}
+        self._layer_cond_numbers_: list[float] = []
         feature_importance_accum = np.zeros(n_features)
 
         if evals:
@@ -156,11 +157,12 @@ class DGBFMultiOutputModel:
             if stop:
                 break
 
-            new_layer, new_weights = self._fit_layer(
+            new_layer, new_weights, layer_cond = self._fit_layer(
                 X, pseudo_y, layer_idx, rng, h
             )
             self.graph_.append(new_layer)
             self.weights_.append(new_weights)
+            self._layer_cond_numbers_.append(layer_cond)
 
             for tree in new_layer:
                 feature_importance_accum += tree.feature_importances_
@@ -204,7 +206,7 @@ class DGBFMultiOutputModel:
         layer_idx: int,
         rng: np.random.Generator,
         hessian: np.ndarray,
-    ) -> tuple[list[TreeUpdater], np.ndarray]:
+    ) -> tuple[list[TreeUpdater], np.ndarray, float]:
         """
         Fit T multi-output trees for one layer.
 
@@ -222,6 +224,9 @@ class DGBFMultiOutputModel:
         -------
         new_layer : list of TreeUpdater, length n_trees
         layer_weights : (K, n_trees)
+        cond : float
+            Mean condition number of the per-class (n_samples, n_trees)
+            predictor slices; always computed as a diagnostic.
         """
         n_samples = X.shape[0]
         K = pseudo_y.shape[1]
@@ -257,6 +262,13 @@ class DGBFMultiOutputModel:
         # Stack into (n_samples, K, n_trees)
         all_preds = np.stack(tree_preds, axis=2)
 
+        # Condition number diagnostic: mean across all K per-class slices.
+        # Each slice is (n_samples, n_trees); we report the mean as a single
+        # representative scalar stored in _layer_cond_numbers_.
+        cond = float(
+            np.mean([np.linalg.cond(all_preds[:, k, :]) for k in range(K)])
+        )
+
         # Per-class NNLS: each class independently weights the shared trees
         layer_weights = np.zeros((K, self.n_trees))
         for k in range(K):
@@ -266,7 +278,7 @@ class DGBFMultiOutputModel:
                 method=self.weight_solver,
             )
 
-        return new_layer, layer_weights
+        return new_layer, layer_weights, cond
 
     # ------------------------------------------------------------------
     # Inference

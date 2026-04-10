@@ -91,6 +91,7 @@ class DGBFModel:
         hessian_reg: float = 0.0,
         objective: str | BaseObjective = "reg:squarederror",
         random_state: int | None = None,
+        cond_threshold: float | None = None,
     ):
         self.n_trees = n_trees
         self.n_layers = n_layers
@@ -104,6 +105,7 @@ class DGBFModel:
         self.hessian_reg = hessian_reg
         self.objective = objective
         self.random_state = random_state
+        self.cond_threshold = cond_threshold
 
         # Fitted state (set during fit)
         self.graph_: list[list[TreeUpdater]] = []
@@ -168,6 +170,8 @@ class DGBFModel:
         self.prior_ = obj.prior(y)
         self.n_features_in_ = n_features
         self.evals_result_ = {}
+        self._layer_cond_numbers_: list[float] = []
+        self._layer_n_trees_: list[int] = []
         feature_importance_accum = np.zeros(n_features)
 
         # Initialise eval result containers
@@ -179,6 +183,10 @@ class DGBFModel:
         callbacks = callbacks or []
         for cb in callbacks:
             cb.before_training(self)
+
+        # Effective width for the next layer — starts at n_trees and may be
+        # halved adaptively when cond_threshold is enabled.
+        _effective_n_trees = self.n_trees
 
         for layer_idx in range(self.n_layers):
             # --- Compute current predictions and pseudo-residuals --------
@@ -210,11 +218,20 @@ class DGBFModel:
                 break
 
             # --- Fit this layer ------------------------------------------
-            new_layer, new_weights = self._fit_layer(
-                X, pseudo_y, layer_idx, rng, h_global
+            new_layer, new_weights, layer_cond = self._fit_layer(
+                X, pseudo_y, layer_idx, rng, h_global, _effective_n_trees
             )
             self.graph_.append(new_layer)
             self.weights_.append(new_weights)
+            self._layer_cond_numbers_.append(layer_cond)
+            self._layer_n_trees_.append(_effective_n_trees)
+
+            # Adaptive width: halve n_trees for the next layer when the
+            # predictor matrix is ill-conditioned and adaptation is enabled.
+            if self.cond_threshold is not None and layer_cond > self.cond_threshold:
+                _effective_n_trees = max(1, _effective_n_trees // 2)
+            else:
+                _effective_n_trees = self.n_trees
 
             # --- Optional linear projection ------------------------------
             if self.linear_projection:
@@ -279,7 +296,8 @@ class DGBFModel:
         layer_idx: int,
         rng: np.random.Generator,
         hessian: np.ndarray | None = None,
-    ) -> tuple[list[TreeUpdater], np.ndarray]:
+        n_trees_override: int | None = None,
+    ) -> tuple[list[TreeUpdater], np.ndarray, float]:
         """
         Fit all T trees for layer ``layer_idx`` using bagging.
 
@@ -294,6 +312,8 @@ class DGBFModel:
 
         After fitting, a single weight vector of length T is computed via
         NNLS on the full dataset to optimally combine the T tree predictions.
+        The condition number of the predictor matrix (n_samples, T) is also
+        returned as a diagnostic.
 
         Parameters
         ----------
@@ -304,18 +324,26 @@ class DGBFModel:
         rng : np.random.Generator
         hessian : (n_samples,) or None
             Per-sample Hessian values used as tree fitting sample weights.
+        n_trees_override : int or None
+            Effective number of trees to fit for this layer.  When ``None``
+            (the default), ``self.n_trees`` is used.  The adaptive scheduling
+            logic in ``fit()`` passes a potentially reduced value here.
 
         Returns
         -------
-        new_layer : list of TreeUpdater, length n_trees
-        layer_weights : np.ndarray of shape (n_trees,)
+        new_layer : list of TreeUpdater, length n_trees_effective
+        layer_weights : np.ndarray of shape (n_trees_effective,)
             One combination weight per bagged tree.
+        cond : float
+            Condition number of the (n_samples, n_trees_effective) predictor
+            matrix; always computed regardless of ``cond_threshold``.
         """
         n_samples = X.shape[0]
+        n_trees_effective = n_trees_override if n_trees_override is not None else self.n_trees
         new_layer: list[TreeUpdater] = []
         tree_preds: list[np.ndarray] = []
 
-        for t in range(self.n_trees):
+        for t in range(n_trees_effective):
             # Dynamic bootstrap subsample (paper sec. 3.1.3)
             sample_idx = bootstrap_sampler(
                 n_samples=n_samples,
@@ -339,8 +367,14 @@ class DGBFModel:
             new_layer.append(tree)
             tree_preds.append(tree.predict(X)[:, 0])  # (n_samples,)
 
-        # Stack per-tree predictions: (n_samples, n_trees)
+        # Stack per-tree predictions: (n_samples, n_trees_effective)
         all_preds = np.column_stack(tree_preds)
+
+        # Condition number of the predictor matrix (diagnostic).
+        # Always computed so _layer_cond_numbers_ is populated regardless of
+        # whether cond_threshold is enabled.  The value is returned to fit()
+        # which appends it to self._layer_cond_numbers_.
+        cond = float(np.linalg.cond(all_preds))
 
         # Single weight vector for the layer (paper eq. 11)
         layer_weights = weight_solver(
@@ -349,7 +383,7 @@ class DGBFModel:
             method=self.weight_solver,
         )
 
-        return new_layer, layer_weights
+        return new_layer, layer_weights, cond
 
     # ------------------------------------------------------------------
     # Inference
@@ -406,6 +440,7 @@ class DGBFModel:
             "hessian_reg": self.hessian_reg,
             "objective": self.objective,
             "random_state": self.random_state,
+            "cond_threshold": self.cond_threshold,
         }
 
     def __repr__(self) -> str:
