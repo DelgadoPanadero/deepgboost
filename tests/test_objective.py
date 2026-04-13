@@ -93,7 +93,8 @@ class TestSoftmaxObjective:
         # softmax([0,0,0]) = [1/3, 1/3, 1/3]
         # gradient[0] = 1 - 1/3 = 2/3; gradient[1,2] = 0 - 1/3 = -1/3
         np.testing.assert_array_almost_equal(
-            g, np.array([[2 / 3, -1 / 3, -1 / 3]])
+            g,
+            np.array([[2 / 3, -1 / 3, -1 / 3]]),
         )
 
     def test_prior_raises_for_1d(self):

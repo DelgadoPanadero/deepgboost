@@ -28,7 +28,9 @@ from .common.categorical import CategoricalEncoderMixin
 
 
 class DeepGBoostMultiClassifier(
-    CategoricalEncoderMixin, BaseEstimator, ClassifierMixin
+    CategoricalEncoderMixin,
+    BaseEstimator,
+    ClassifierMixin,
 ):
     """
     DeepGBoost multi-output classifier — sklearn-compatible interface.
@@ -168,7 +170,7 @@ class DeepGBoostMultiClassifier(
             from .callbacks import EarlyStoppingCallback
 
             all_callbacks.append(
-                EarlyStoppingCallback(patience=self.early_stopping_rounds)
+                EarlyStoppingCallback(patience=self.early_stopping_rounds),
             )
 
         self.model_ = DGBFMultiOutputModel(
@@ -213,7 +215,9 @@ class DeepGBoostMultiClassifier(
         indices = np.argmax(proba, axis=1)
         return self.label_encoder_.inverse_transform(indices)
 
-    def score(self, X: ArrayLike, y: ArrayLike, sample_weight: ArrayLike | None = None) -> float:
+    def score(
+        self, X: ArrayLike, y: ArrayLike, sample_weight: ArrayLike | None = None,
+    ) -> float:
         """Return accuracy."""
         return float(np.mean(self.predict(X) == np.asarray(y)))
 

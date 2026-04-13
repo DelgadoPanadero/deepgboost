@@ -116,7 +116,10 @@ class TestDeepGBoostRegressorLinearProjection:
     def test_linear_projection_has_linear_models(self, diabetes_split):
         X_train, _, y_train, _ = diabetes_split
         reg = DeepGBoostRegressor(
-            n_trees=3, n_layers=3, linear_projection=True, random_state=0
+            n_trees=3,
+            n_layers=3,
+            linear_projection=True,
+            random_state=0,
         )
         reg.fit(X_train, y_train)
         assert len(reg.model_.linear_models_) == 3
@@ -124,7 +127,10 @@ class TestDeepGBoostRegressorLinearProjection:
     def test_linear_projection_false_has_no_linear_models(self, diabetes_split):
         X_train, _, y_train, _ = diabetes_split
         reg = DeepGBoostRegressor(
-            n_trees=3, n_layers=3, linear_projection=False, random_state=0
+            n_trees=3,
+            n_layers=3,
+            linear_projection=False,
+            random_state=0,
         )
         reg.fit(X_train, y_train)
         assert len(reg.model_.linear_models_) == 0
@@ -201,7 +207,7 @@ def cat_data_pandas():
                 "Sevilla",
             ],
             "income": [30000, 45000, 50000, 60000, 55000, 70000],
-        }
+        },
     )
     y = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
     return X, y
@@ -259,7 +265,8 @@ class TestDeepGBoostRegressorCategorical:
         assert reg_loaded.numerical_columns_ == reg.numerical_columns_
         assert reg_loaded.ohe_ is not None
         np.testing.assert_array_equal(
-            reg_loaded.ohe_.categories_[0], reg.ohe_.categories_[0]
+            reg_loaded.ohe_.categories_[0],
+            reg.ohe_.categories_[0],
         )
 
     def test_pickle_identical_predictions(self, cat_data_numpy):
@@ -298,34 +305,44 @@ class TestDeepGBoostRegressorCategorical:
 
 class TestDeepGBoostRegressorPipeline:
     _REG = DeepGBoostRegressor(
-        n_trees=5, n_layers=5, max_depth=3, learning_rate=0.1, random_state=42
+        n_trees=5,
+        n_layers=5,
+        max_depth=3,
+        learning_rate=0.1,
+        random_state=42,
     )
 
     def test_pipeline_cross_val_score(self, diabetes_split):
         X_train, _, y_train, _ = diabetes_split
-        pipe = Pipeline([
-            ("scaler", StandardScaler()),
-            ("model", clone(self._REG)),
-        ])
+        pipe = Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                ("model", clone(self._REG)),
+            ],
+        )
         scores = cross_val_score(pipe, X_train, y_train, cv=3, scoring="r2")
         assert scores.mean() > 0.0, (
             f"Mean CV R² should be positive, got {scores.mean():.4f}"
         )
 
     def test_pipeline_get_params(self):
-        pipe = Pipeline([
-            ("scaler", StandardScaler()),
-            ("model", clone(self._REG)),
-        ])
+        pipe = Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                ("model", clone(self._REG)),
+            ],
+        )
         params = pipe.get_params()
         assert "model__n_layers" in params
         assert "model__n_trees" in params
 
     def test_pipeline_set_params(self):
-        pipe = Pipeline([
-            ("scaler", StandardScaler()),
-            ("model", clone(self._REG)),
-        ])
+        pipe = Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                ("model", clone(self._REG)),
+            ],
+        )
         pipe.set_params(model__n_layers=3, model__learning_rate=0.05)
         assert pipe.named_steps["model"].n_layers == 3
         assert pipe.named_steps["model"].learning_rate == 0.05

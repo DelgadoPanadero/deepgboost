@@ -36,7 +36,10 @@ def reg_data():
 def clf_data():
     """Binary classification dataset: 150 samples, 8 features."""
     X, y = make_classification(
-        n_samples=150, n_features=8, n_informative=4, random_state=0
+        n_samples=150,
+        n_features=8,
+        n_informative=4,
+        random_state=0,
     )
     return X, y.astype(np.float64)
 
@@ -199,7 +202,7 @@ class TestAdaptiveHalving:
         n_trees_config = model.n_trees
         cond_thresh = model.cond_threshold
         for i, (cond, actual) in enumerate(
-            zip(model._layer_cond_numbers_, model._layer_n_trees_)
+            zip(model._layer_cond_numbers_, model._layer_n_trees_),
         ):
             if i + 1 < len(model._layer_n_trees_):
                 next_actual = model._layer_n_trees_[i + 1]
@@ -207,5 +210,3 @@ class TestAdaptiveHalving:
                     assert next_actual == max(1, actual // 2)
                 else:
                     assert next_actual == n_trees_config
-
-

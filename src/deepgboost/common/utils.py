@@ -50,7 +50,7 @@ def bootstrap_sampler(
         size = n_samples
     else:
         size = int(
-            min_size + (n_samples - min_size) * layer_idx / (n_layers - 1)
+            min_size + (n_samples - min_size) * layer_idx / (n_layers - 1),
         )
         size = min(size, n_samples)
 
@@ -108,7 +108,7 @@ def weight_solver(
     else:
         raise ValueError(
             f"Unknown weight_solver method: '{method}'. "
-            "Valid options are 'nnls' and 'uniform'."
+            "Valid options are 'nnls' and 'uniform'.",
         )
 
     total = weights.sum()

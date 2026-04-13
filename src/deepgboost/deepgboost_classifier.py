@@ -28,7 +28,9 @@ from .common.categorical import CategoricalEncoderMixin
 
 
 class DeepGBoostClassifier(
-    CategoricalEncoderMixin, BaseEstimator, ClassifierMixin
+    CategoricalEncoderMixin,
+    BaseEstimator,
+    ClassifierMixin,
 ):
     """
     DeepGBoost classifier — sklearn-compatible interface.
@@ -176,13 +178,17 @@ class DeepGBoostClassifier(
             from .callbacks import EarlyStoppingCallback
 
             all_callbacks.append(
-                EarlyStoppingCallback(patience=self.early_stopping_rounds)
+                EarlyStoppingCallback(patience=self.early_stopping_rounds),
             )
 
         if n_classes == 2:
             # Binary classification
             self._binary_model = self._fit_binary(
-                X, y_enc.astype(np.float64), eval_set, all_callbacks, model_kw,
+                X,
+                y_enc.astype(np.float64),
+                eval_set,
+                all_callbacks,
+                model_kw,
             )
         else:
             # Multiclass: one-vs-rest
@@ -195,13 +201,17 @@ class DeepGBoostClassifier(
                         (
                             Xv,
                             (LabelEncoder().fit_transform(yv) == k).astype(
-                                np.float64
+                                np.float64,
                             ),
                         )
                         for Xv, yv in eval_set
                     ]
                 model_k = self._fit_binary(
-                    X, y_k, eval_set_k, all_callbacks, model_kw
+                    X,
+                    y_k,
+                    eval_set_k,
+                    all_callbacks,
+                    model_kw,
                 )
                 self._ovr_models.append(model_k)
 
@@ -250,7 +260,7 @@ class DeepGBoostClassifier(
         else:
             # OvR: collect raw log-odds from each binary model
             log_odds = np.column_stack(
-                [m.predict_raw(X) for m in self._ovr_models]
+                [m.predict_raw(X) for m in self._ovr_models],
             )  # (n_samples, K)
             return softmax(log_odds, axis=1)
 
@@ -266,7 +276,9 @@ class DeepGBoostClassifier(
         indices = np.argmax(proba, axis=1)
         return self.label_encoder_.inverse_transform(indices)
 
-    def score(self, X: ArrayLike, y: ArrayLike, sample_weight: ArrayLike | None = None) -> float:
+    def score(
+        self, X: ArrayLike, y: ArrayLike, sample_weight: ArrayLike | None = None,
+    ) -> float:
         """Return accuracy."""
         return float(np.mean(self.predict(X) == np.asarray(y)))
 
@@ -277,6 +289,7 @@ class DeepGBoostClassifier(
         if self.n_classes_ == 2:
             return self._binary_model.feature_importances_
         importances = np.mean(
-            [m.feature_importances_ for m in self._ovr_models], axis=0
+            [m.feature_importances_ for m in self._ovr_models],
+            axis=0,
         )
         return importances

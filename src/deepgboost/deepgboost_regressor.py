@@ -182,7 +182,7 @@ class DeepGBoostRegressor(
                 from .callbacks import EarlyStoppingCallback
 
                 all_callbacks.append(
-                    EarlyStoppingCallback(patience=self.early_stopping_rounds)
+                    EarlyStoppingCallback(patience=self.early_stopping_rounds),
                 )
 
         self.model_.fit(
@@ -226,7 +226,7 @@ class DeepGBoostRegressor(
     def feature_importances_(self) -> np.ndarray:
         check_is_fitted(self, "model_")
 
-        if (feature_importances:= self.model_.feature_importances_) is None:
+        if (feature_importances := self.model_.feature_importances_) is None:
             raise Exception()
 
         return feature_importances

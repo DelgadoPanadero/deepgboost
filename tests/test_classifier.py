@@ -39,7 +39,11 @@ def multiclass_split():
 
 class TestDeepGBoostClassifierBinary:
     _CLF = DeepGBoostClassifier(
-        n_trees=5, n_layers=10, max_depth=4, learning_rate=0.15, random_state=42
+        n_trees=5,
+        n_layers=10,
+        max_depth=4,
+        learning_rate=0.15,
+        random_state=42,
     )
 
     def test_fit_returns_self(self, binary_split):
@@ -106,7 +110,11 @@ class TestDeepGBoostClassifierBinary:
 
 class TestDeepGBoostClassifierMulticlass:
     _CLF = DeepGBoostClassifier(
-        n_trees=5, n_layers=8, max_depth=3, learning_rate=0.1, random_state=0
+        n_trees=5,
+        n_layers=8,
+        max_depth=3,
+        learning_rate=0.1,
+        random_state=0,
     )
 
     def test_classes_attribute_multiclass(self, multiclass_split):
@@ -128,9 +136,7 @@ class TestDeepGBoostClassifierMulticlass:
         clf = clone(self._CLF)
         clf.fit(X_train, y_train)
         acc = clf.score(X_test, y_test)
-        assert acc > 0.85, (
-            f"Multiclass accuracy should be > 0.85, got {acc:.4f}"
-        )
+        assert acc > 0.85, f"Multiclass accuracy should be > 0.85, got {acc:.4f}"
 
 
 # ---------------------------------------------------------------------------
@@ -141,7 +147,9 @@ class TestDeepGBoostClassifierMulticlass:
 class TestDeepGBoostClassifierSklearnCompat:
     def test_clone_preserves_params(self):
         clf = DeepGBoostClassifier(
-            n_layers=10, learning_rate=0.05, random_state=7
+            n_layers=10,
+            learning_rate=0.05,
+            random_state=7,
         )
         clf2 = clone(clf)
         assert clf2.n_layers == 10
@@ -233,7 +241,7 @@ def cat_multiclass_pandas():
                 2.8,
                 3.8,
             ],
-        }
+        },
     )
     y = np.array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2])
     return X, y
@@ -273,7 +281,8 @@ class TestDeepGBoostClassifierCategorical:
         np.testing.assert_array_equal(proba_before, clf_loaded.predict_proba(X))
 
     def test_pickle_identical_predictions_multiclass(
-        self, cat_multiclass_pandas
+        self,
+        cat_multiclass_pandas,
     ):
         X, y = cat_multiclass_pandas
         clf = clone(self._CLF)
@@ -310,34 +319,44 @@ class TestDeepGBoostClassifierCategorical:
 
 class TestDeepGBoostClassifierPipeline:
     _CLF = DeepGBoostClassifier(
-        n_trees=5, n_layers=10, max_depth=4, learning_rate=0.15, random_state=42
+        n_trees=5,
+        n_layers=10,
+        max_depth=4,
+        learning_rate=0.15,
+        random_state=42,
     )
 
     def test_pipeline_cross_val_score(self, binary_split):
         X_train, _, y_train, _ = binary_split
-        pipe = Pipeline([
-            ("scaler", StandardScaler()),
-            ("model", clone(self._CLF)),
-        ])
+        pipe = Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                ("model", clone(self._CLF)),
+            ],
+        )
         scores = cross_val_score(pipe, X_train, y_train, cv=3, scoring="accuracy")
         assert scores.mean() > 0.8, (
             f"Mean CV accuracy should be > 0.8, got {scores.mean():.4f}"
         )
 
     def test_pipeline_get_params(self):
-        pipe = Pipeline([
-            ("scaler", StandardScaler()),
-            ("model", clone(self._CLF)),
-        ])
+        pipe = Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                ("model", clone(self._CLF)),
+            ],
+        )
         params = pipe.get_params()
         assert "model__n_layers" in params
         assert "model__n_trees" in params
 
     def test_pipeline_set_params(self):
-        pipe = Pipeline([
-            ("scaler", StandardScaler()),
-            ("model", clone(self._CLF)),
-        ])
+        pipe = Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                ("model", clone(self._CLF)),
+            ],
+        )
         pipe.set_params(model__n_layers=3, model__learning_rate=0.05)
         assert pipe.named_steps["model"].n_layers == 3
         assert pipe.named_steps["model"].learning_rate == 0.05

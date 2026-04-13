@@ -118,7 +118,7 @@ class DGBFMultiOutputModel:
         if y.ndim != 2:
             raise ValueError(
                 "DGBFMultiOutputModel requires a 2-D one-hot target y of shape "
-                "(n_samples, K)."
+                "(n_samples, K).",
             )
 
         obj = SoftmaxObjective()
@@ -146,8 +146,8 @@ class DGBFMultiOutputModel:
         for layer_idx in range(self.n_layers):
             F_prev = self.predict_raw(X)  # (n_samples, K)
 
-            g = obj.gradient(y, F_prev)   # (n_samples, K)
-            h = obj.hessian(y, F_prev)    # (n_samples, K)
+            g = obj.gradient(y, F_prev)  # (n_samples, K)
+            h = obj.hessian(y, F_prev)  # (n_samples, K)
 
             pseudo_y = (
                 g / np.maximum(h + self.hessian_reg, 1e-7)
@@ -162,7 +162,13 @@ class DGBFMultiOutputModel:
                 break
 
             new_layer, new_weights, layer_cond = self._fit_layer(
-                X, pseudo_y, layer_idx, rng, h, n_samples, K
+                X,
+                pseudo_y,
+                layer_idx,
+                rng,
+                h,
+                n_samples,
+                K,
             )
             self.graph_.append(new_layer)
             self.weights_.append(new_weights)
@@ -176,13 +182,14 @@ class DGBFMultiOutputModel:
             if evals:
                 for X_val, y_val, name in evals:
                     F_val = self.predict_raw(X_val)  # (n_val, K)
-                    p_val = obj.transform(F_val)     # softmax → (n_val, K)
+                    p_val = obj.transform(F_val)  # softmax → (n_val, K)
                     p_val = np.clip(p_val, 1e-7, 1.0 - 1e-7)
                     logloss = float(
-                        -np.mean(np.sum(y_val * np.log(p_val), axis=1))
+                        -np.mean(np.sum(y_val * np.log(p_val), axis=1)),
                     )
                     self.evals_result_.setdefault(name, {}).setdefault(
-                        "logloss", []
+                        "logloss",
+                        [],
                     ).append(logloss)
                     evals_log[name] = {"logloss": logloss}
 
@@ -195,9 +202,7 @@ class DGBFMultiOutputModel:
 
         total = feature_importance_accum.sum()
         self.feature_importances_ = (
-            feature_importance_accum / total
-            if total > 0
-            else feature_importance_accum
+            feature_importance_accum / total if total > 0 else feature_importance_accum
         )
 
         for cb in callbacks:
@@ -282,8 +287,8 @@ class DGBFMultiOutputModel:
             cond_values.append(float(np.linalg.cond(preds_k)))
 
             layer_weights[k] = weight_solver(
-                preds_k,           # (n_samples, n_trees)
-                pseudo_y[:, k],    # (n_samples,)
+                preds_k,  # (n_samples, n_trees)
+                pseudo_y[:, k],  # (n_samples,)
                 method=self.weight_solver,
                 sample_weight=hessian[:, k],
             )
@@ -331,7 +336,7 @@ class DGBFMultiOutputModel:
         if not self.graph_:
             raise RuntimeError(
                 "This DGBFMultiOutputModel instance is not fitted yet. "
-                "Call 'fit' first."
+                "Call 'fit' first.",
             )
 
     def get_params(self) -> dict:

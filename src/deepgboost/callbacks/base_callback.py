@@ -20,6 +20,7 @@ Usage example::
 
 from __future__ import annotations
 
+
 class TrainingCallback:
     """
     Abstract base class for DeepGBoost training callbacks.

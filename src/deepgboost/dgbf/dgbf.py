@@ -198,7 +198,7 @@ class DGBFModel:
             # in this implementation — each tree learns its own component via
             # independent bootstrap subsamples and multi-output regression)
             g_global = obj.gradient(y, F_prev)  # (n_samples,)
-            h_global = obj.hessian(y, F_prev)   # (n_samples,)
+            h_global = obj.hessian(y, F_prev)  # (n_samples,)
 
             # Newton step: g/(h + reg) scales the update correctly for
             # objectives whose Hessian varies with F (e.g. logistic).
@@ -206,7 +206,9 @@ class DGBFModel:
             # it prevents extreme Newton steps when h is small (e.g. near the
             # prior for imbalanced datasets) and improves convergence stability.
             # For MSE (h=1 everywhere) this term has minimal effect.
-            pseudo_y = (g_global / np.maximum(h_global + self.hessian_reg, 1e-7)) * self.learning_rate  # (n_samples,)
+            pseudo_y = (
+                g_global / np.maximum(h_global + self.hessian_reg, 1e-7)
+            ) * self.learning_rate  # (n_samples,)
 
             # Before-iteration callbacks
             stop = False
@@ -219,7 +221,12 @@ class DGBFModel:
 
             # --- Fit this layer ------------------------------------------
             new_layer, new_weights, layer_cond = self._fit_layer(
-                X, pseudo_y, layer_idx, rng, h_global, _effective_n_trees
+                X,
+                pseudo_y,
+                layer_idx,
+                rng,
+                h_global,
+                _effective_n_trees,
             )
             self.graph_.append(new_layer)
             self.weights_.append(new_weights)
@@ -249,7 +256,7 @@ class DGBFModel:
                 var_total = np.var(pseudo_y) + 1e-10
                 var_lin = np.var(pseudo_y - lin_pred_full)
                 lin.alpha_mix_ = float(
-                    np.clip(1.0 - var_lin / var_total, 0.0, 1.0)
+                    np.clip(1.0 - var_lin / var_total, 0.0, 1.0),
                 )
                 self.linear_models_.append(lin)
 
@@ -263,7 +270,8 @@ class DGBFModel:
                     F_val = self._predictor.predict_raw(self, X_val)
                     loss = float(np.sqrt(np.mean((y_val - F_val) ** 2)))
                     self.evals_result_.setdefault(name, {}).setdefault(
-                        "train_loss", []
+                        "train_loss",
+                        [],
                     ).append(loss)
                     evals_log[name] = {"train_loss": loss}
 
@@ -278,9 +286,7 @@ class DGBFModel:
         # Normalise feature importances
         total = feature_importance_accum.sum()
         self.feature_importances_ = (
-            feature_importance_accum / total
-            if total > 0
-            else feature_importance_accum
+            feature_importance_accum / total if total > 0 else feature_importance_accum
         )
 
         # After-training callbacks
@@ -339,7 +345,9 @@ class DGBFModel:
             matrix; always computed regardless of ``cond_threshold``.
         """
         n_samples = X.shape[0]
-        n_trees_effective = n_trees_override if n_trees_override is not None else self.n_trees
+        n_trees_effective = (
+            n_trees_override if n_trees_override is not None else self.n_trees
+        )
         new_layer: list[TreeUpdater] = []
         tree_preds: list[np.ndarray] = []
 
@@ -423,7 +431,7 @@ class DGBFModel:
     def _check_is_fitted(self) -> None:
         if not self.graph_:
             raise RuntimeError(
-                "This DGBFModel instance is not fitted yet. Call 'fit' first."
+                "This DGBFModel instance is not fitted yet. Call 'fit' first.",
             )
 
     def get_params(self) -> dict:

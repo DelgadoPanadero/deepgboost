@@ -38,7 +38,10 @@ def binary_split():
 
 class TestDeepGBoostMultiClassifierMulticlass:
     _CLF = DeepGBoostMultiClassifier(
-        n_trees=5, n_layers=10, max_depth=4, random_state=42
+        n_trees=5,
+        n_layers=10,
+        max_depth=4,
+        random_state=42,
     )
 
     def test_fit_returns_self(self, multiclass_split):
@@ -120,10 +123,15 @@ class TestDeepGBoostMultiClassifierMulticlass:
 
     def test_pipeline_compatible(self, multiclass_split):
         X_train, X_test, y_train, _ = multiclass_split
-        pipe = Pipeline([
-            ("scaler", StandardScaler()),
-            ("clf", DeepGBoostMultiClassifier(n_trees=3, n_layers=5, random_state=0)),
-        ])
+        pipe = Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                (
+                    "clf",
+                    DeepGBoostMultiClassifier(n_trees=3, n_layers=5, random_state=0),
+                ),
+            ],
+        )
         pipe.fit(X_train, y_train)
         proba = pipe.predict_proba(X_test)
         assert proba.shape == (len(X_test), 3)
@@ -132,7 +140,10 @@ class TestDeepGBoostMultiClassifierMulticlass:
         """Multi-output accuracy should be within 5 pp of OvR on iris."""
         X_train, X_test, y_train, y_test = multiclass_split
         clf_ovr = DeepGBoostClassifier(
-            n_trees=5, n_layers=10, max_depth=4, random_state=42
+            n_trees=5,
+            n_layers=10,
+            max_depth=4,
+            random_state=42,
         ).fit(X_train, y_train)
         clf_multi = clone(self._CLF).fit(X_train, y_train)
         assert clf_multi.score(X_test, y_test) >= clf_ovr.score(X_test, y_test) - 0.05
@@ -145,7 +156,10 @@ class TestDeepGBoostMultiClassifierMulticlass:
 
 class TestDeepGBoostMultiClassifierBinary:
     _CLF = DeepGBoostMultiClassifier(
-        n_trees=5, n_layers=5, max_depth=4, random_state=42
+        n_trees=5,
+        n_layers=5,
+        max_depth=4,
+        random_state=42,
     )
 
     def test_binary_predict_proba_shape(self, binary_split):
@@ -182,7 +196,9 @@ class TestGraphStructure:
         K = 3
         n_trees = 3
         clf = DeepGBoostMultiClassifier(
-            n_trees=n_trees, n_layers=5, random_state=0
+            n_trees=n_trees,
+            n_layers=5,
+            random_state=0,
         )
         clf.fit(X, y)
         first_layer = clf.model_.graph_[0]

@@ -59,7 +59,7 @@ class DeepGBoostPredictor:
 
             # Stack each tree's 1-D prediction → (n_samples, n_trees)
             tree_preds = np.column_stack(
-                [tree.predict(X)[:, 0] for tree in layer]
+                [tree.predict(X)[:, 0] for tree in layer],
             )
             # Weighted sum across the T bagged trees → (n_samples,)
             accum += (tree_preds * layer_weights).sum(axis=1)

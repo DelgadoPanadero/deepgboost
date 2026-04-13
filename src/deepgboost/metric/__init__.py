@@ -24,6 +24,6 @@ def get_metric(name: str):
     """Return a metric instance by name string."""
     if name not in METRICS:
         raise ValueError(
-            f"Unknown metric '{name}'. Available: {list(METRICS.keys())}"
+            f"Unknown metric '{name}'. Available: {list(METRICS.keys())}",
         )
     return METRICS[name]()

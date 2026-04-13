@@ -91,7 +91,7 @@ class SoftmaxObjective(BaseObjective):
         """Log-odds prior for each class (shape n_classes)."""
         if y.ndim == 1:
             raise ValueError(
-                "SoftmaxObjective requires one-hot encoded y (2-D)."
+                "SoftmaxObjective requires one-hot encoded y (2-D).",
             )
         p = y.mean(axis=0)
         p = np.clip(p, 1e-7, 1 - 1e-7)

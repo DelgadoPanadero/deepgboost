@@ -34,7 +34,7 @@ class LogLossMetric(BaseMetric):
     ) -> float:
         p = np.clip(y_pred, 1e-7, 1 - 1e-7)
         return float(
-            -np.mean(y_true * np.log(p) + (1.0 - y_true) * np.log(1.0 - p))
+            -np.mean(y_true * np.log(p) + (1.0 - y_true) * np.log(1.0 - p)),
         )
 
 

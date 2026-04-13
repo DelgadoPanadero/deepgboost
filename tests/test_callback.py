@@ -178,9 +178,7 @@ class TestLearningRateScheduler:
         assert len(rates_seen) == 5
         # After scheduler, rates are set; verify they're different
         unique_rates = set(round(r, 6) for r in rates_seen)
-        assert len(unique_rates) > 1, (
-            "Learning rates should change across layers"
-        )
+        assert len(unique_rates) > 1, "Learning rates should change across layers"
 
     def test_constant_schedule(self, diabetes_split):
         X_train, _, y_train, _ = diabetes_split

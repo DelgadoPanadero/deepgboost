@@ -20,6 +20,6 @@ def get_objective(name: str):
     """Return an objective instance by name string."""
     if name not in OBJECTIVES:
         raise ValueError(
-            f"Unknown objective '{name}'. Available: {list(OBJECTIVES.keys())}"
+            f"Unknown objective '{name}'. Available: {list(OBJECTIVES.keys())}",
         )
     return OBJECTIVES[name]()
