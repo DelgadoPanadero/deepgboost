@@ -15,7 +15,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 
 from deepgboost import DeepGBoostRegressor
-from deepgboost.gbm.dgbf import DGBFModel
+from deepgboost.dgbf.dgbf import DGBFModel
 from deepgboost.predictor.predictor import DeepGBoostPredictor
 from deepgboost.tree.updater import TreeUpdater
 
@@ -102,7 +102,8 @@ class TestRandomForestEquivalence:
         """prior_ must equal mean(y_train), as in a RandomForest."""
         _, _, y_train, _ = diabetes_split
         assert rf_model.model_.prior_ == pytest.approx(
-            y_train.mean(), rel=1e-12
+            y_train.mean(),
+            rel=1e-12,
         )
 
     def test_weights_are_uniform(self, rf_model):
@@ -120,7 +121,7 @@ class TestRandomForestEquivalence:
         model = rf_model.model_
 
         tree_preds = np.column_stack(
-            [t.predict(X_test)[:, 0] for t in model.graph_[0]]
+            [t.predict(X_test)[:, 0] for t in model.graph_[0]],
         )
         expected = model.prior_ + tree_preds.mean(axis=1)
 

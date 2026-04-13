@@ -68,10 +68,7 @@ class EarlyStoppingCallback(TrainingCallback):
             return False
 
         # Determine if improvement (lower is better for loss metrics)
-        improved = (
-            self._best_score is None
-            or score < self._best_score - self.min_delta
-        )
+        improved = self._best_score is None or score < self._best_score - self.min_delta
 
         if improved:
             self._best_score = score

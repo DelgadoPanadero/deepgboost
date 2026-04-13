@@ -59,7 +59,7 @@ def plot_importance(
     except ImportError as exc:
         raise ImportError(
             "matplotlib is required for plotting. "
-            "Install it with: pip install deepgboost[plotting]"
+            "Install it with: pip install deepgboost[plotting]",
         ) from exc
 
     # Retrieve importances from various model types
@@ -72,12 +72,12 @@ def plot_importance(
     else:
         raise ValueError(
             "Cannot extract feature importances from the provided model. "
-            "Make sure the model is fitted."
+            "Make sure the model is fitted.",
         )
 
     if importances is None:
         raise ValueError(
-            "Model has not been fitted or feature importances are None."
+            "Model has not been fitted or feature importances are None.",
         )
 
     n_features = len(importances)
@@ -100,7 +100,10 @@ def plot_importance(
         fig = ax.get_figure()
 
     ax.barh(
-        range(len(indices)), selected_scores, color=color, edgecolor="white"
+        range(len(indices)),
+        selected_scores,
+        color=color,
+        edgecolor="white",
     )
     ax.set_yticks(range(len(indices)))
     ax.set_yticklabels(selected_names)

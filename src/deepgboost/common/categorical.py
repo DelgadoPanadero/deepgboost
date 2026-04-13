@@ -36,7 +36,8 @@ class CategoricalEncoderMixin:
         ]
         if cat_cols:
             self.ohe_ = OneHotEncoder(
-                sparse_output=False, handle_unknown="ignore"
+                sparse_output=False,
+                handle_unknown="ignore",
             )
             X_cat = self.ohe_.fit_transform(X_arr[:, cat_cols])
             return self._assemble(X_arr, X_cat)
