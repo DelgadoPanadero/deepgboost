@@ -117,15 +117,7 @@ The script reads its configuration from `benchmark/config.json`, where you can a
 
 ## 🤝 Contributing
 
-Contributions are welcome. To get started:
-
-1. Fork the repository and create a branch from `main`.
-2. Install development dependencies: `pip install -e '.[dev]'`
-3. Make your changes and add tests as needed.
-4. Run the test suite: `pytest`
-5. Open a pull request describing what you changed and why.
-
-Please open an issue first for significant changes so the approach can be discussed before implementation.
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code style, and pull request guidelines.
 
 ## 📄 Citation
 
