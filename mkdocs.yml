@@ -42,6 +42,13 @@ plugins:
             show_root_heading: true
             heading_level: 2
 
+extra:
+  social:
+    - icon: fontawesome/brands/linkedin
+      link: https://linkedin.com/in/delgado-panadero
+    - icon: fontawesome/brands/x-twitter
+      link: https://twitter.com/panaderodelgado
+
 nav:
   - Home: index.md
   - Examples:
