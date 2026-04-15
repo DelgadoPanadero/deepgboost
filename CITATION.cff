@@ -3,7 +3,7 @@ message: "If you use DeepGBoost in your research, please cite the following pape
 type: software
 title: DeepGBoost
 version: 0.3.1
-repository-code: https://github.com/DelgadoPanadero/DeepGBoost
+repository-code: https://github.com/delgadopanadero/deepgboost
 license: Apache-2.0
 preferred-citation:
   type: article

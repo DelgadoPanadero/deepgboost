@@ -1,8 +1,8 @@
 #  DeepGBoost
 
 [![PyPI version](https://badge.fury.io/py/deepgboost.svg)](https://pypi.python.org/pypi/deepgboost/)
-[![CI](https://github.com/DelgadoPanadero/DeepGBoost/actions/workflows/ci.yml/badge.svg)](https://github.com/DelgadoPanadero/DeepGBoost/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/DelgadoPanadero/DeepGBoost/branch/main/graph/badge.svg)](https://codecov.io/gh/DelgadoPanadero/DeepGBoost)
+[![CI](https://github.com/delgadopanadero/deepgboost/actions/workflows/ci.yml/badge.svg)](https://github.com/delgadopanadero/deepgboost/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/delgadopanadero/deepgboost/branch/main/graph/badge.svg)](https://codecov.io/gh/delgadopanadero/deepgboost)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![PythonVersion](https://img.shields.io/pypi/pyversions/deepgboost.svg)](https://pypi.org/project/deepgboost/)
 
@@ -25,8 +25,8 @@ pip install deepgboost[plotting]
 To install from source with development dependencies:
 
 ```bash
-git clone https://github.com/PanaderoDelgado/DeepGBoost.git
-cd DeepGBoost
+git clone https://github.com/delgadopanadero/deepgboost.git
+cd deepgboost
 pip install -e .
 ```
 
@@ -121,4 +121,4 @@ Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for developmen
 
 ## 📄 Citation
 
-If you use DeepGBoost in your research, please cite using the metadata in [CITATION](CITATION) or the BibTeX entry provided by GitHub ("Cite this repository" button).
+If you use DeepGBoost in your research, please cite using the metadata in [CITATION.cff](CITATION.cff) or the BibTeX entry provided by GitHub ("Cite this repository" button).

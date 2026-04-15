@@ -1,8 +1,8 @@
 site_name: DeepGBoost — Distributed Gradient Boosting Forest
 site_description: Distributed Gradient Boosting Forest — deep graph tree ensemble combining RandomForest and GradientBoosting into a layered neural-network-style architecture.
 site_url: https://delgadopanadero.com/DeepGBoost/
-repo_name: DelgadoPanadero/DeepGBoost
-repo_url: https://github.com/DelgadoPanadero/DeepGBoost
+repo_name: delgadopanadero/deepgboost
+repo_url: https://github.com/delgadopanadero/deepgboost
 
 theme:
   name: material

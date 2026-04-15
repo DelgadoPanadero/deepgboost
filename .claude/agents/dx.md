@@ -36,4 +36,4 @@ You own the external-facing project health:
 - Tree budget in any test or example you write: `n_layers × n_trees ≤ 100`.
 - Write for outsiders: assume no prior knowledge of the codebase.
 - Check `git log` before writing commit messages to match project style (`type(#issue): description`).
-- Repo: `PanaderoDelgado/DeepGBoost`. Current version in `pyproject.toml`.
+- Repo: `delgadopanadero/deepgboost`. Current version in `pyproject.toml`.
