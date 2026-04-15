@@ -121,4 +121,4 @@ Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for developmen
 
 ## 📄 Citation
 
-If you use DeepGBoost in your research, please cite using the metadata in [CITATION.cff](CITATION.cff) or the BibTeX entry provided by GitHub ("Cite this repository" button).
+If you use DeepGBoost in your research, please cite using the metadata in [CITATION](CITATION) or the BibTeX entry provided by GitHub ("Cite this repository" button).
