@@ -121,16 +121,4 @@ Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for developmen
 
 ## 📄 Citation
 
-If you use DeepGBoost in your research, please cite the original paper:
-
-```bibtex
-@article{delgado2023dgbf,
-  author  = {Delgado-Panadero, {\'A}ngel and Ben{\'i}tez-Andrades, Jos{\'e} Alberto and Garc{\'i}a-Ord{\'a}s, Mar{\'i}a Teresa},
-  title   = {A generalized decision tree ensemble based on the {NeuralNetworks} architecture: {Distributed Gradient Boosting Forest (DGBF)}},
-  journal = {Applied Intelligence},
-  volume  = {53},
-  pages   = {22991--23003},
-  year    = {2023},
-  doi     = {10.1007/s10489-023-04735-w}
-}
-```
+If you use DeepGBoost in your research, please cite using the metadata in [CITATION.cff](CITATION.cff) or the BibTeX entry provided by GitHub ("Cite this repository" button).
