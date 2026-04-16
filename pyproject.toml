@@ -40,6 +40,7 @@ docs = [
     "mkdocs-jupyter>=0.24",
     "pillow>=10.0",
     "cairosvg>=2.7",
+    "matplotlib>=3.7",
 ]
 
 [tool.setuptools.packages.find]
